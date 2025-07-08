@@ -38,7 +38,7 @@ export default function Admin() {
   }, [isAuthenticated, isLoading, toast]);
 
   const { data: packages, isLoading: packagesLoading } = usePackages({
-    status: statusFilter,
+    status: statusFilter === "all" ? "" : statusFilter,
     search: searchTerm,
   });
 
@@ -176,7 +176,7 @@ export default function Admin() {
                       <SelectValue placeholder="Все статусы" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Все статусы</SelectItem>
+                      <SelectItem value="all">Все статусы</SelectItem>
                       <SelectItem value="created_admin">Создана</SelectItem>
                       <SelectItem value="sent_to_logist">Передана логисту</SelectItem>
                       <SelectItem value="logist_confirmed">Логист подтвердил</SelectItem>

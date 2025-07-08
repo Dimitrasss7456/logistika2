@@ -38,7 +38,7 @@ export default function Logist() {
   }, [isAuthenticated, isLoading, toast]);
 
   const { data: packages, isLoading: packagesLoading } = usePackages({
-    status: statusFilter,
+    status: statusFilter === "all" ? "" : statusFilter,
     search: searchTerm,
   });
 
@@ -115,7 +115,7 @@ export default function Logist() {
                   <SelectValue placeholder="Все статусы" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Все статусы</SelectItem>
+                  <SelectItem value="all">Все статусы</SelectItem>
                   <SelectItem value="received_info">Получена информация</SelectItem>
                   <SelectItem value="package_received">Посылка получена</SelectItem>
                   <SelectItem value="awaiting_shipping_logist">Ожидает отправки</SelectItem>

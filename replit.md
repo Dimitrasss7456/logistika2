@@ -126,6 +126,7 @@ This is a full-stack web application for managing package logistics and deliveri
 
 ## Changelog
 - July 08, 2025. Initial setup
+- July 08, 2025. Completed migration from Replit Agent to Replit environment with PostgreSQL database setup, dependency installation, and SelectItem value fixes
 
 ## User Preferences
 

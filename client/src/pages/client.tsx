@@ -70,7 +70,7 @@ export default function Client() {
   });
 
   const { data: packages, isLoading: packagesLoading } = usePackages({
-    status: statusFilter,
+    status: statusFilter === "all" ? "" : statusFilter,
     search: searchTerm,
   });
 
@@ -235,7 +235,7 @@ export default function Client() {
                       <SelectValue placeholder="Все статусы" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Все статусы</SelectItem>
+                      <SelectItem value="all">Все статусы</SelectItem>
                       <SelectItem value="created_client">Создана</SelectItem>
                       <SelectItem value="client_received">Получена логистом</SelectItem>
                       <SelectItem value="awaiting_processing_client">Ожидает обработки</SelectItem>
