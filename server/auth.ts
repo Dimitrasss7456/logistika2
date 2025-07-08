@@ -57,15 +57,18 @@ export async function setupAuth(app: Express) {
     }
   });
 
-  // Logout endpoint
-  app.post('/api/logout', (req, res) => {
+  // Logout endpoint (supports both GET and POST)
+  const logoutHandler = (req, res) => {
     req.session.destroy((err) => {
       if (err) {
         return res.status(500).json({ message: "Ошибка выхода из системы" });
       }
       res.json({ message: "Успешный выход из системы" });
     });
-  });
+  };
+  
+  app.post('/api/logout', logoutHandler);
+  app.get('/api/logout', logoutHandler);
 
   // Get current user endpoint
   app.get('/api/auth/user', (req, res) => {

@@ -98,11 +98,20 @@ export default function Landing() {
             </Card>
 
             <div className="mt-4 p-4 bg-white/50 rounded-lg">
-              <h3 className="font-semibold mb-2">Тестовые учетные записи:</h3>
-              <div className="text-sm space-y-1">
-                <div><strong>Администратор:</strong> admin@package.ru / admin123</div>
-                <div><strong>Логист:</strong> logist@package.ru / logist123</div>
-                <div><strong>Клиент:</strong> client@package.ru / client123</div>
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Тестовые учетные записи:</h3>
+              <div className="space-y-2 text-xs text-gray-600">
+                <div className="flex justify-between">
+                  <span>Администратор:</span>
+                  <span>admin@package.ru / 123456</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Клиент:</span>
+                  <span>client@package.ru / 123456</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Логист:</span>
+                  <span>logist@package.ru / 123456</span>
+                </div>
               </div>
             </div>
           </div>
