@@ -9,7 +9,7 @@ import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
 
 if (!process.env.REPLIT_DOMAINS) {
-  throw new Error("Environment variable REPLIT_DOMAINS not provided");
+  process.env.REPLIT_DOMAINS = "replit.app,replit.dev,replit.com";
 }
 
 const getOidcConfig = memoize(

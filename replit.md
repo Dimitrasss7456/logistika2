@@ -35,10 +35,12 @@ This is a full-stack web application for managing package logistics and deliveri
 ## Key Components
 
 ### Authentication System
-- **Provider**: Replit Auth with OpenID Connect
+- **Dual Authentication**: Supports both Replit OAuth and demo login for testing
+- **Demo Credentials**: admin@package.ru/123456, client@package.ru/123456, logist@package.ru/123456
 - **Session Storage**: PostgreSQL-backed sessions with 1-week TTL
 - **Role Management**: Three-tier system (admin, logist, client)
 - **Security**: HTTP-only cookies with secure flags
+- **Role Switching**: Easy switching between user roles for testing and demonstration
 
 ### Package Management
 - **Status Workflow**: 15+ distinct package states from creation to delivery
@@ -127,6 +129,7 @@ This is a full-stack web application for managing package logistics and deliveri
 ## Changelog
 - July 08, 2025. Initial setup
 - July 08, 2025. Completed migration from Replit Agent to Replit environment with PostgreSQL database setup, dependency installation, and SelectItem value fixes
+- July 08, 2025. Implemented dual authentication system supporting both Replit OAuth and demo login with test credentials for easy role switching. Added logout functionality and resolved environment variable issues.
 
 ## User Preferences
 
