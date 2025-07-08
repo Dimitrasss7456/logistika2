@@ -32,12 +32,15 @@ export async function setupAuth(app: Express) {
   // Login endpoint
   app.post('/api/login', async (req, res) => {
     try {
+      console.log('Login endpoint called with body:', req.body);
       const { email, password } = req.body;
       
       if (!email || !password) {
+        console.log('Missing email or password');
         return res.status(400).json({ message: "Email и пароль обязательны" });
       }
 
+      console.log('Calling validateCredentials with:', email, password);
       const user = await storage.validateCredentials(email, password);
       
       if (!user) {

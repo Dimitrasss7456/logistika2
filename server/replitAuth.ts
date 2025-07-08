@@ -32,13 +32,13 @@ export function getSession() {
     tableName: "sessions",
   });
   return session({
-    secret: process.env.SESSION_SECRET!,
+    secret: process.env.SESSION_SECRET || 'package-management-secret-key',
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: true,
+      secure: false, // Set to true in production with HTTPS
       maxAge: sessionTtl,
     },
   });
@@ -101,6 +101,35 @@ export async function setupAuth(app: Express) {
   passport.serializeUser((user: Express.User, cb) => cb(null, user));
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));
 
+  // Demo login endpoint for testing (POST)
+  app.post("/api/login", async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      
+      if (!email || !password) {
+        return res.status(400).json({ message: "Email и пароль обязательны" });
+      }
+
+      const user = await storage.validateCredentials(email, password);
+      
+      if (!user) {
+        return res.status(401).json({ message: "Неверный email или пароль" });
+      }
+
+      // Store user in session
+      (req.session as any).user = user;
+      
+      res.json({ 
+        user,
+        message: "Успешный вход в систему"
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ message: "Ошибка входа в систему" });
+    }
+  });
+
+  // Replit OAuth login (GET)
   app.get("/api/login", (req, res, next) => {
     passport.authenticate(`replitauth:${req.hostname}`, {
       prompt: "login consent",
@@ -115,6 +144,17 @@ export async function setupAuth(app: Express) {
     })(req, res, next);
   });
 
+  // Demo logout endpoint for testing (POST)
+  app.post("/api/logout", (req, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).json({ message: "Ошибка выхода из системы" });
+      }
+      res.json({ message: "Успешный выход из системы" });
+    });
+  });
+
+  // Replit OAuth logout (GET)
   app.get("/api/logout", (req, res) => {
     req.logout(() => {
       res.redirect(
@@ -125,9 +165,34 @@ export async function setupAuth(app: Express) {
       );
     });
   });
+
+  // Get current user endpoint
+  app.get('/api/auth/user', (req, res) => {
+    // Check for demo login session first
+    const sessionUser = (req.session as any)?.user;
+    if (sessionUser) {
+      return res.json(sessionUser);
+    }
+    
+    // Otherwise, use Replit auth
+    const user = req.user as any;
+    if (req.isAuthenticated() && user) {
+      res.json(user);
+    } else {
+      res.status(401).json({ message: "Unauthorized" });
+    }
+  });
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
+  // Check for demo login session first
+  const sessionUser = (req.session as any)?.user;
+  if (sessionUser) {
+    (req as any).user = sessionUser;
+    return next();
+  }
+
+  // Otherwise, use Replit auth
   const user = req.user as any;
 
   if (!req.isAuthenticated() || !user.expires_at) {

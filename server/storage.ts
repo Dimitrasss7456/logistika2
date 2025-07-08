@@ -104,9 +104,9 @@ export class DatabaseStorage implements IStorage {
   async validateCredentials(email: string, password: string): Promise<User | null> {
     // Hardcoded credentials for demo
     const credentials = {
-      'admin@package.ru': { password: 'admin123', role: 'admin', id: 'admin-001' },
-      'logist@package.ru': { password: 'logist123', role: 'logist', id: 'logist-001' },
-      'client@package.ru': { password: 'client123', role: 'client', id: 'client-001' }
+      'admin@package.ru': { password: '123456', role: 'admin', id: 'admin-001' },
+      'logist@package.ru': { password: '123456', role: 'logist', id: 'logist-001' },
+      'client@package.ru': { password: '123456', role: 'client', id: 'client-001' }
     };
 
     const cred = credentials[email as keyof typeof credentials];
