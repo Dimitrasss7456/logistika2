@@ -15,6 +15,7 @@
   --input: hsl(20, 5.9%, 90%);
   --primary: hsl(207, 90%, 54%);
   --primary-foreground: hsl(211, 100%, 99%);
+  --primary-dark: hsl(205, 90%, 46%);
   --secondary: hsl(60, 4.8%, 95.9%);
   --secondary-foreground: hsl(24, 9.8%, 10%);
   --accent: hsl(60, 4.8%, 95.9%);
@@ -23,6 +24,11 @@
   --destructive-foreground: hsl(60, 9.1%, 97.8%);
   --ring: hsl(20, 14.3%, 4.1%);
   --radius: 0.5rem;
+  --success: hsl(122, 39%, 49%);
+  --warning: hsl(38, 92%, 50%);
+  --error: hsl(0, 84.2%, 60.2%);
+  --neutral-bg: hsl(0, 0%, 98%);
+  --neutral-border: hsl(0, 0%, 88%);
 }
 
 .dark {
@@ -38,6 +44,7 @@
   --input: hsl(240, 3.7%, 15.9%);
   --primary: hsl(207, 90%, 54%);
   --primary-foreground: hsl(211, 100%, 99%);
+  --primary-dark: hsl(205, 90%, 46%);
   --secondary: hsl(240, 3.7%, 15.9%);
   --secondary-foreground: hsl(0, 0%, 98%);
   --accent: hsl(240, 3.7%, 15.9%);
@@ -46,6 +53,11 @@
   --destructive-foreground: hsl(0, 0%, 98%);
   --ring: hsl(240, 4.9%, 83.9%);
   --radius: 0.5rem;
+  --success: hsl(122, 39%, 49%);
+  --warning: hsl(38, 92%, 50%);
+  --error: hsl(0, 62.8%, 30.6%);
+  --neutral-bg: hsl(240, 10%, 3.9%);
+  --neutral-border: hsl(240, 3.7%, 15.9%);
 }
 
 @layer base {
@@ -55,5 +67,203 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
   }
+}
+
+@layer utilities {
+  .bg-neutral-bg {
+    background-color: var(--neutral-bg);
+  }
+  
+  .border-neutral-border {
+    border-color: var(--neutral-border);
+  }
+  
+  .bg-primary {
+    background-color: var(--primary);
+  }
+  
+  .bg-primary-dark {
+    background-color: var(--primary-dark);
+  }
+  
+  .text-primary {
+    color: var(--primary);
+  }
+  
+  .bg-success {
+    background-color: var(--success);
+  }
+  
+  .bg-warning {
+    background-color: var(--warning);
+  }
+  
+  .bg-error {
+    background-color: var(--error);
+  }
+  
+  .hover\:bg-primary-dark:hover {
+    background-color: var(--primary-dark);
+  }
+  
+  .hover\:bg-green-600:hover {
+    background-color: hsl(122, 39%, 40%);
+  }
+}
+
+/* Custom scrollbar styles */
+.overflow-y-auto::-webkit-scrollbar {
+  width: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: hsl(0, 0%, 95%);
+  border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: hsl(0, 0%, 70%);
+  border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: hsl(0, 0%, 60%);
+}
+
+/* Animation for notifications */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.notification-enter {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Progress bar animation */
+@keyframes progressFill {
+  from {
+    width: 0%;
+  }
+}
+
+.progress-bar {
+  animation: progressFill 0.5s ease-out;
+}
+
+/* Card hover effects */
+.card-hover {
+  transition: all 0.2s ease-in-out;
+}
+
+.card-hover:hover {
+  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transform: translateY(-1px);
+}
+
+/* File upload area styles */
+.file-upload-area {
+  transition: all 0.2s ease-in-out;
+}
+
+.file-upload-area:hover {
+  border-color: var(--primary);
+  background-color: hsl(207, 90%, 98%);
+}
+
+/* Loading spinner */
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Status badge styles */
+.status-badge {
+  font-weight: 500;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+}
+
+/* Form input focus styles */
+.form-input:focus {
+  outline: none;
+  ring: 2px;
+  ring-color: var(--primary);
+  border-color: transparent;
+}
+
+/* Button transition styles */
+.btn-transition {
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-transition:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Notification center styles */
+.notification-center {
+  max-height: 24rem;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: hsl(0, 0%, 70%) hsl(0, 0%, 95%);
+}
+
+/* Package card grid responsive styles */
+@media (max-width: 768px) {
+  .package-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .package-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1025px) {
+  .package-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Modal backdrop */
+.modal-backdrop {
+  backdrop-filter: blur(4px);
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+/* Tab navigation active state */
+.tab-active {
+  border-bottom: 2px solid var(--primary);
+  color: var(--primary);
+}
+
+.tab-inactive {
+  border-bottom: 2px solid transparent;
+  color: hsl(0, 0%, 50%);
+}
+
+.tab-inactive:hover {
+  color: hsl(0, 0%, 30%);
+  border-bottom-color: hsl(0, 0%, 70%);
 }
