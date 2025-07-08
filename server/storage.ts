@@ -22,12 +22,17 @@ import { eq, desc, like, or, and } from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
-  // User operations (required for Replit Auth)
+  // User operations
   getUser(id: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  createUser(user: UpsertUser): Promise<User>;
   upsertUser(user: UpsertUser): Promise<User>;
   getUsersByRole(role: string): Promise<User[]>;
   updateUserRole(userId: string, role: string): Promise<void>;
   toggleUserAccess(userId: string, isActive: boolean): Promise<void>;
+  
+  // Auth operations
+  validateCredentials(email: string, password: string): Promise<User | null>;
 
   // Logist operations
   getLogists(): Promise<(Logist & { user: User })[]>;
@@ -71,6 +76,16 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async createUser(userData: UpsertUser): Promise<User> {
+    const [user] = await db.insert(users).values([userData]).returning();
+    return user;
+  }
+
   async upsertUser(userData: UpsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
@@ -84,6 +99,33 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return user;
+  }
+
+  async validateCredentials(email: string, password: string): Promise<User | null> {
+    // Hardcoded credentials for demo
+    const credentials = {
+      'admin@package.ru': { password: 'admin123', role: 'admin', id: 'admin-001' },
+      'logist@package.ru': { password: 'logist123', role: 'logist', id: 'logist-001' },
+      'client@package.ru': { password: 'client123', role: 'client', id: 'client-001' }
+    };
+
+    const cred = credentials[email as keyof typeof credentials];
+    if (cred && cred.password === password) {
+      // Check if user exists, if not create them
+      let user = await this.getUserByEmail(email);
+      if (!user) {
+        user = await this.createUser({
+          id: cred.id,
+          email: email,
+          firstName: cred.role === 'admin' ? 'Администратор' : cred.role === 'logist' ? 'Логист' : 'Клиент',
+          lastName: 'Системы',
+          role: cred.role as any,
+          isActive: true
+        });
+      }
+      return user;
+    }
+    return null;
   }
 
   async getUsersByRole(role: string): Promise<User[]> {
@@ -209,7 +251,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createPackage(packageData: InsertPackage): Promise<Package> {
-    const [newPackage] = await db.insert(packages).values([packageData]).returning();
+    // Generate unique package number
+    const uniqueNumber = `PKG-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+    const packageWithNumber = { ...packageData, uniqueNumber };
+    
+    const [newPackage] = await db.insert(packages).values([packageWithNumber]).returning();
     return newPackage;
   }
 

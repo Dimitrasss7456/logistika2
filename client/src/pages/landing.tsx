@@ -1,10 +1,49 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Package, Users, Shield, Bell } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function Landing() {
-  const handleLogin = () => {
-    window.location.href = "/api/login";
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const { toast } = useToast();
+
+  const loginMutation = useMutation({
+    mutationFn: async ({ email, password }: { email: string; password: string }) => {
+      return await apiRequest('/api/login', 'POST', { email, password });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Успешный вход",
+        description: "Добро пожаловать в систему управления посылками!",
+      });
+      window.location.reload(); // Reload to update auth state
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Ошибка входа",
+        description: error.message || "Неверный email или пароль",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) {
+      toast({
+        title: "Ошибка",
+        description: "Пожалуйста, заполните все поля",
+        variant: "destructive",
+      });
+      return;
+    }
+    loginMutation.mutate({ email, password });
   };
 
   return (
@@ -17,12 +56,56 @@ export default function Landing() {
           <p className="text-xl text-gray-600 mb-8">
             Профессиональная платформа для отслеживания и управления доставкой посылок
           </p>
-          <Button 
-            onClick={handleLogin}
-            className="bg-primary hover:bg-primary-dark text-white px-8 py-3 text-lg"
-          >
-            Войти в систему
-          </Button>
+          
+          <div className="max-w-md mx-auto mb-8">
+            <Card>
+              <CardHeader>
+                <CardTitle>Вход в систему</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="example@package.ru"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Пароль</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Введите пароль"
+                      required
+                    />
+                  </div>
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-primary hover:bg-primary-dark" 
+                    disabled={loginMutation.isPending}
+                  >
+                    {loginMutation.isPending ? "Вход..." : "Войти"}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            <div className="mt-4 p-4 bg-white/50 rounded-lg">
+              <h3 className="font-semibold mb-2">Тестовые учетные записи:</h3>
+              <div className="text-sm space-y-1">
+                <div><strong>Администратор:</strong> admin@package.ru / admin123</div>
+                <div><strong>Логист:</strong> logist@package.ru / logist123</div>
+                <div><strong>Клиент:</strong> client@package.ru / client123</div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
@@ -120,7 +203,7 @@ export default function Landing() {
             Войдите в систему, чтобы получить доступ к вашей панели управления
           </p>
           <Button 
-            onClick={handleLogin}
+            onClick={() => window.scrollTo({ top: 60, behavior: 'smooth' })}
             className="bg-primary hover:bg-primary-dark text-white px-8 py-3"
           >
             Войти в систему
