@@ -2,8 +2,9 @@ import { Package as PackageType } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CreditCard, Upload, MessageSquare, Calendar, MapPin, Package, Truck } from "lucide-react";
+import { CreditCard, Upload, MessageSquare, Calendar, MapPin, Package, Truck, CheckCircle, XCircle } from "lucide-react";
 import { usePackageMessages } from "@/hooks/usePackages";
+import { useConfirmPackage, usePackageReceived, usePackagePayment, useSendPackage } from "@/hooks/usePackageActions";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
 import PackageStatus from "./package-status";
@@ -15,6 +16,7 @@ interface PackageCardProps {
   getStatusText: (status: string) => string;
   getStatusColor: (status: string) => string;
   showActions?: boolean;
+  userRole?: 'admin' | 'client' | 'logist';
 }
 
 export default function PackageCard({
@@ -24,11 +26,32 @@ export default function PackageCard({
   getStatusText,
   getStatusColor,
   showActions = true,
+  userRole = 'client',
 }: PackageCardProps) {
   const { data: messages } = usePackageMessages(pkg.id);
+  const confirmPackage = useConfirmPackage();
+  const packageReceived = usePackageReceived();
+  const packagePayment = usePackagePayment();
+  const sendPackage = useSendPackage();
 
   const canPayment = pkg.status === 'awaiting_payment_client';
   const canUploadFile = pkg.status === 'client_received';
+  const canConfirm = pkg.status === 'client_received' && userRole === 'client';
+  const canReceive = pkg.status === 'received_info' && userRole === 'logist';
+  const canSend = (pkg.status === 'awaiting_shipping_logist' && userRole === 'logist') || 
+                  (pkg.status === 'awaiting_shipping_admin' && userRole === 'admin');
+
+  const handleConfirm = (confirmed: boolean) => {
+    confirmPackage.mutate({ packageId: pkg.id, confirmed });
+  };
+
+  const handleReceived = () => {
+    packageReceived.mutate(pkg.id);
+  };
+
+  const handleSend = () => {
+    sendPackage.mutate(pkg.id);
+  };
 
   return (
     <Card className="w-full">
@@ -98,25 +121,76 @@ export default function PackageCard({
         <PackageStatus status={pkg.status} />
 
         {/* Actions */}
-        {showActions && (canPayment || canUploadFile) && (
-          <div className="flex flex-wrap gap-2">
+        {showActions && (
+          <div className="flex flex-wrap gap-2 pt-4 border-t">
             {canPayment && onPayment && (
               <Button
+                variant="default"
+                size="sm"
                 onClick={() => onPayment(pkg.id)}
-                className="bg-primary hover:bg-primary-dark text-white"
+                className="flex items-center gap-2"
               >
-                <CreditCard className="h-4 w-4 mr-2" />
+                <CreditCard className="h-4 w-4" />
                 Оплатить
               </Button>
             )}
             {canUploadFile && onUploadFile && (
               <Button
-                onClick={() => onUploadFile(pkg.id)}
                 variant="outline"
-                className="border-gray-500 text-gray-700 hover:bg-gray-50"
+                size="sm"
+                onClick={() => onUploadFile(pkg.id)}
+                className="flex items-center gap-2"
               >
-                <Upload className="h-4 w-4 mr-2" />
+                <Upload className="h-4 w-4" />
                 Загрузить файл
+              </Button>
+            )}
+            {canConfirm && (
+              <div className="flex gap-2">
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => handleConfirm(true)}
+                  className="flex items-center gap-2"
+                  disabled={confirmPackage.isPending}
+                >
+                  <CheckCircle className="h-4 w-4" />
+                  Подтвердить
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleConfirm(false)}
+                  className="flex items-center gap-2"
+                  disabled={confirmPackage.isPending}
+                >
+                  <XCircle className="h-4 w-4" />
+                  Отклонить
+                </Button>
+              </div>
+            )}
+            {canReceive && (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={handleReceived}
+                className="flex items-center gap-2"
+                disabled={packageReceived.isPending}
+              >
+                <Package className="h-4 w-4" />
+                Посылка получена
+              </Button>
+            )}
+            {canSend && (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={handleSend}
+                className="flex items-center gap-2"
+                disabled={sendPackage.isPending}
+              >
+                <Truck className="h-4 w-4" />
+                Отправить
               </Button>
             )}
           </div>

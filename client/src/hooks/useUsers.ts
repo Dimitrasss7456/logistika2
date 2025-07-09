@@ -1,0 +1,143 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+import { User } from '@/types';
+
+export function useUsers(role?: string) {
+  return useQuery({
+    queryKey: ['/api/users', role],
+    queryFn: async () => {
+      const url = role ? `/api/users?role=${role}` : '/api/users';
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`${response.status}: ${response.statusText}`);
+      }
+      return response.json();
+    },
+  });
+}
+
+export function useUpdateUserRole() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
+      await apiRequest(`/api/users/${userId}/role`, {
+        method: 'PUT',
+        body: JSON.stringify({ role }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+      toast({
+        title: 'Успех',
+        description: 'Роль пользователя успешно обновлена',
+      });
+    },
+    onError: () => {
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось обновить роль пользователя',
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
+export function useToggleUserAccess() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ userId, isActive }: { userId: string; isActive: boolean }) => {
+      await apiRequest(`/api/users/${userId}/access`, {
+        method: 'PUT',
+        body: JSON.stringify({ isActive }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+      toast({
+        title: 'Успех',
+        description: 'Доступ пользователя успешно обновлен',
+      });
+    },
+    onError: () => {
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось обновить доступ пользователя',
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
+export function useLogists() {
+  return useQuery({
+    queryKey: ['/api/logists'],
+    queryFn: async () => {
+      const response = await fetch('/api/logists');
+      if (!response.ok) {
+        throw new Error(`${response.status}: ${response.statusText}`);
+      }
+      return response.json();
+    },
+  });
+}
+
+export function useCreateLogist() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (logistData: any) => {
+      await apiRequest('/api/logists', {
+        method: 'POST',
+        body: JSON.stringify(logistData),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/logists'] });
+      toast({
+        title: 'Успех',
+        description: 'Логист успешно создан',
+      });
+    },
+    onError: () => {
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось создать логиста',
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
+export function useUpdateLogist() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ id, ...logistData }: { id: number } & any) => {
+      await apiRequest(`/api/logists/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(logistData),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/logists'] });
+      toast({
+        title: 'Успех',
+        description: 'Логист успешно обновлен',
+      });
+    },
+    onError: () => {
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось обновить логиста',
+        variant: 'destructive',
+      });
+    },
+  });
+}

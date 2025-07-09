@@ -9,10 +9,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Package, Users, Settings, BarChart3 } from "lucide-react";
 import { usePackages, useUpdatePackageStatus } from "@/hooks/usePackages";
-import { Package as PackageType } from "@/types";
+import { useUsers, useUpdateUserRole, useToggleUserAccess, useLogists } from "@/hooks/useUsers";
+import { Package as PackageType, User } from "@/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { CheckCircle, XCircle, Edit, UserCheck, UserX } from "lucide-react";
 
 export default function Admin() {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -221,14 +223,7 @@ export default function Admin() {
           </TabsContent>
 
           <TabsContent value="users" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Управление пользователями</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">Функция управления пользователями будет добавлена позже</p>
-              </CardContent>
-            </Card>
+            <UserManagement />
           </TabsContent>
 
           <TabsContent value="analytics" className="space-y-6">
@@ -351,6 +346,251 @@ function AdminPackageCard({
               </SelectContent>
             </Select>
           </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function UserManagement() {
+  const [selectedRole, setSelectedRole] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  const { data: users, isLoading: usersLoading } = useUsers(selectedRole === 'all' ? undefined : selectedRole);
+  const { data: logists, isLoading: logistsLoading } = useLogists();
+  const updateUserRole = useUpdateUserRole();
+  const toggleUserAccess = useToggleUserAccess();
+
+  const filteredUsers = users?.filter((user: User) => {
+    if (!searchTerm) return true;
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      user.email?.toLowerCase().includes(searchLower) ||
+      user.firstName?.toLowerCase().includes(searchLower) ||
+      user.lastName?.toLowerCase().includes(searchLower) ||
+      user.telegramUsername?.toLowerCase().includes(searchLower)
+    );
+  });
+
+  const handleRoleChange = (userId: string, newRole: string) => {
+    updateUserRole.mutate({ userId, role: newRole });
+  };
+
+  const handleAccessToggle = (userId: string, currentAccess: boolean) => {
+    toggleUserAccess.mutate({ userId, isActive: !currentAccess });
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="mb-6">
+        <h2 className="text-2xl font-semibold text-gray-900 mb-2">Управление пользователями</h2>
+        <p className="text-gray-600">Управление ролями и доступом пользователей</p>
+      </div>
+
+      {/* Filters */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-wrap gap-4 items-center">
+            <div className="flex-1 min-w-0">
+              <Input
+                placeholder="Поиск по email, имени или Telegram..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <Select value={selectedRole} onValueChange={setSelectedRole}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Все роли" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Все роли</SelectItem>
+                <SelectItem value="admin">Администраторы</SelectItem>
+                <SelectItem value="logist">Логисты</SelectItem>
+                <SelectItem value="client">Клиенты</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Users List */}
+      {usersLoading ? (
+        <div className="flex justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      ) : filteredUsers?.length === 0 ? (
+        <Card>
+          <CardContent className="pt-6 text-center">
+            <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-600">Пользователи не найдены</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredUsers?.map((user: User) => (
+            <UserCard
+              key={user.id}
+              user={user}
+              onRoleChange={handleRoleChange}
+              onAccessToggle={handleAccessToggle}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Logists Section */}
+      <div className="mt-8">
+        <h3 className="text-xl font-semibold text-gray-900 mb-4">Логисты</h3>
+        {logistsLoading ? (
+          <div className="flex justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        ) : logists?.length === 0 ? (
+          <Card>
+            <CardContent className="pt-6 text-center">
+              <p className="text-gray-600">Логисты не найдены</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {logists?.map((logist: any) => (
+              <LogistCard key={logist.id} logist={logist} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function UserCard({ user, onRoleChange, onAccessToggle }: {
+  user: User;
+  onRoleChange: (userId: string, role: string) => void;
+  onAccessToggle: (userId: string, currentAccess: boolean) => void;
+}) {
+  const getRoleColor = (role: string) => {
+    switch (role) {
+      case 'admin': return 'bg-red-100 text-red-800';
+      case 'logist': return 'bg-blue-100 text-blue-800';
+      case 'client': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getRoleText = (role: string) => {
+    switch (role) {
+      case 'admin': return 'Администратор';
+      case 'logist': return 'Логист';
+      case 'client': return 'Клиент';
+      default: return role;
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <CardTitle className="text-lg">
+              {user.firstName || user.lastName ? 
+                `${user.firstName || ''} ${user.lastName || ''}`.trim() : 
+                user.email || 'Без имени'
+              }
+            </CardTitle>
+            <p className="text-sm text-gray-600 mt-1">
+              {user.email}
+            </p>
+            {user.telegramUsername && (
+              <p className="text-sm text-gray-600 mt-1">
+                @{user.telegramUsername}
+              </p>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge className={getRoleColor(user.role)}>
+              {getRoleText(user.role)}
+            </Badge>
+            {user.isActive ? (
+              <CheckCircle className="h-4 w-4 text-green-500" />
+            ) : (
+              <XCircle className="h-4 w-4 text-red-500" />
+            )}
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Select value={user.role} onValueChange={(value) => onRoleChange(user.id, value)}>
+            <SelectTrigger className="flex-1">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="admin">Администратор</SelectItem>
+              <SelectItem value="logist">Логист</SelectItem>
+              <SelectItem value="client">Клиент</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onAccessToggle(user.id, user.isActive)}
+          >
+            {user.isActive ? (
+              <UserX className="h-4 w-4" />
+            ) : (
+              <UserCheck className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+        <div className="text-xs text-gray-500">
+          Создан: {new Date(user.createdAt).toLocaleDateString()}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function LogistCard({ logist }: { logist: any }) {
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <CardTitle className="text-lg">
+              {logist.user.firstName || logist.user.lastName ? 
+                `${logist.user.firstName || ''} ${logist.user.lastName || ''}`.trim() : 
+                logist.user.email || 'Без имени'
+              }
+            </CardTitle>
+            <p className="text-sm text-gray-600 mt-1">
+              {logist.user.email}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {logist.isActive ? (
+              <CheckCircle className="h-4 w-4 text-green-500" />
+            ) : (
+              <XCircle className="h-4 w-4 text-red-500" />
+            )}
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div>
+          <p className="text-sm font-medium text-gray-700">Локация:</p>
+          <p className="text-sm text-gray-600">{logist.location}</p>
+        </div>
+        <div>
+          <p className="text-sm font-medium text-gray-700">Адрес:</p>
+          <p className="text-sm text-gray-600">{logist.address}</p>
+        </div>
+        <div className="flex gap-2">
+          {logist.supportsLockers && (
+            <Badge variant="secondary">Локеры</Badge>
+          )}
+          {logist.supportsOffices && (
+            <Badge variant="secondary">Офисы</Badge>
+          )}
         </div>
       </CardContent>
     </Card>

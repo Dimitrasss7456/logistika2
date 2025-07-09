@@ -244,6 +244,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Package workflow action routes
+  app.post('/api/packages/:id/confirm', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = req.user;
+      if (currentUser?.role !== 'client') {
+        return res.status(403).json({ message: "Доступ запрещен" });
+      }
+
+      const packageId = parseInt(req.params.id);
+      const { confirmed } = req.body;
+      
+      const newStatus = confirmed ? 'confirmed_by_client' : 'awaiting_processing_client';
+      const updatedPackage = await storage.updatePackageStatus(packageId, newStatus);
+      res.json(updatedPackage);
+    } catch (error) {
+      console.error("Error confirming package:", error);
+      res.status(500).json({ message: "Ошибка подтверждения посылки" });
+    }
+  });
+
+  app.post('/api/packages/:id/received', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = req.user;
+      if (currentUser?.role !== 'logist') {
+        return res.status(403).json({ message: "Доступ запрещен" });
+      }
+
+      const packageId = parseInt(req.params.id);
+      const updatedPackage = await storage.updatePackageStatus(packageId, 'package_received');
+      res.json(updatedPackage);
+    } catch (error) {
+      console.error("Error confirming package received:", error);
+      res.status(500).json({ message: "Ошибка подтверждения получения посылки" });
+    }
+  });
+
+  app.post('/api/packages/:id/payment', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = req.user;
+      const packageId = parseInt(req.params.id);
+      const { paymentDetails, paymentAmount } = req.body;
+      
+      // Update package with payment info
+      await storage.updatePackage(packageId, { paymentDetails, paymentAmount });
+      
+      let newStatus = 'awaiting_processing_admin';
+      if (currentUser?.role === 'client') {
+        newStatus = 'awaiting_processing_admin';
+      }
+      
+      const updatedPackage = await storage.updatePackageStatus(packageId, newStatus);
+      res.json(updatedPackage);
+    } catch (error) {
+      console.error("Error processing payment:", error);
+      res.status(500).json({ message: "Ошибка обработки платежа" });
+    }
+  });
+
+  app.post('/api/packages/:id/send', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = req.user;
+      const packageId = parseInt(req.params.id);
+      
+      let newStatus = '';
+      if (currentUser?.role === 'logist') {
+        newStatus = 'sent_by_logist';
+      } else if (currentUser?.role === 'admin') {
+        newStatus = 'sent_client';
+      }
+      
+      const updatedPackage = await storage.updatePackageStatus(packageId, newStatus);
+      res.json(updatedPackage);
+    } catch (error) {
+      console.error("Error sending package:", error);
+      res.status(500).json({ message: "Ошибка отправки посылки" });
+    }
+  });
+
   // Notification routes
   app.get('/api/notifications', isAuthenticated, async (req: any, res) => {
     try {

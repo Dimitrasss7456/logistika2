@@ -253,9 +253,31 @@ export class DatabaseStorage implements IStorage {
   async createPackage(packageData: InsertPackage): Promise<Package> {
     // Generate unique package number
     const uniqueNumber = `PKG-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
-    const packageWithNumber = { ...packageData, uniqueNumber };
+    const packageWithNumber = { ...packageData, uniqueNumber, status: 'created_client' as const };
     
     const [newPackage] = await db.insert(packages).values([packageWithNumber]).returning();
+    
+    // Create notifications for admin and logist
+    await this.createNotification({
+      userId: packageData.logistId.toString(),
+      title: 'Новая посылка',
+      message: `Вам назначена новая посылка ${uniqueNumber}`,
+      type: 'package_status',
+      packageId: newPackage.id
+    });
+
+    // Create admin notification
+    const adminUsers = await this.getUsersByRole('admin');
+    for (const admin of adminUsers) {
+      await this.createNotification({
+        userId: admin.id,
+        title: 'Новая посылка создана',
+        message: `Клиент создал новую посылку ${uniqueNumber}`,
+        type: 'package_status',
+        packageId: newPackage.id
+      });
+    }
+
     return newPackage;
   }
 
@@ -269,7 +291,86 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(packages.id, id))
       .returning();
+      
+    // Create notifications based on status change
+    await this.createStatusChangeNotifications(updatedPackage, status);
+    
     return updatedPackage;
+  }
+
+  // Helper function to create notifications for status changes
+  private async createStatusChangeNotifications(pkg: Package, newStatus: string) {
+    const statusNotifications = {
+      'created_admin': {
+        logist: { title: 'Новая посылка', message: `Получена новая посылка ${pkg.uniqueNumber}` },
+      },
+      'sent_to_logist': {
+        logist: { title: 'Посылка передана', message: `Посылка ${pkg.uniqueNumber} передана вам` },
+      },
+      'package_received': {
+        admin: { title: 'Посылка получена', message: `Логист получил посылку ${pkg.uniqueNumber}` },
+      },
+      'logist_confirmed': {
+        client: { title: 'Посылка подтверждена', message: `Логист подтвердил получение посылки ${pkg.uniqueNumber}` },
+      },
+      'client_received': {
+        admin: { title: 'Клиент получил информацию', message: `Клиент получил информацию о посылке ${pkg.uniqueNumber}` },
+      },
+      'confirmed_by_client': {
+        admin: { title: 'Подтверждено клиентом', message: `Клиент подтвердил посылку ${pkg.uniqueNumber}` },
+      },
+      'awaiting_payment_client': {
+        client: { title: 'Ожидает оплаты', message: `Необходима оплата для посылки ${pkg.uniqueNumber}` },
+      },
+      'awaiting_shipping_logist': {
+        logist: { title: 'Готово к отправке', message: `Посылка ${pkg.uniqueNumber} готова к отправке` },
+      },
+      'sent_client': {
+        client: { title: 'Посылка отправлена', message: `Ваша посылка ${pkg.uniqueNumber} отправлена` },
+      },
+      'paid_logist': {
+        logist: { title: 'Оплата получена', message: `Оплата за посылку ${pkg.uniqueNumber} получена` },
+      }
+    };
+
+    const notification = statusNotifications[newStatus as keyof typeof statusNotifications];
+    if (notification) {
+      // Send to client
+      if ('client' in notification) {
+        await this.createNotification({
+          userId: pkg.clientId,
+          title: notification.client.title,
+          message: notification.client.message,
+          type: 'package_status',
+          packageId: pkg.id
+        });
+      }
+      
+      // Send to logist
+      if ('logist' in notification) {
+        await this.createNotification({
+          userId: pkg.logistId.toString(),
+          title: notification.logist.title,
+          message: notification.logist.message,
+          type: 'package_status',
+          packageId: pkg.id
+        });
+      }
+      
+      // Send to admin
+      if ('admin' in notification) {
+        const adminUsers = await this.getUsersByRole('admin');
+        for (const admin of adminUsers) {
+          await this.createNotification({
+            userId: admin.id,
+            title: notification.admin.title,
+            message: notification.admin.message,
+            type: 'package_status',
+            packageId: pkg.id
+          });
+        }
+      }
+    }
   }
 
   async updatePackage(id: number, updates: Partial<InsertPackage>): Promise<Package> {

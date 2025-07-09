@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { MapPin, Mail, MessageCircle, Building, Box, Plus } from "lucide-react";
 import CreatePackageModal from "@/components/modals/create-package-modal";
 import PaymentModal from "@/components/modals/payment-modal";
+import FileUploadModal from "@/components/modals/file-upload-modal";
 import { usePackages } from "@/hooks/usePackages";
 import PackageCard from "@/components/package/package-card";
 import { Input } from "@/components/ui/input";
@@ -23,6 +24,7 @@ export default function Client() {
   const [selectedLogist, setSelectedLogist] = useState<Logist | null>(null);
   const [createPackageOpen, setCreatePackageOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [fileUploadOpen, setFileUploadOpen] = useState(false);
   const [selectedPackageId, setSelectedPackageId] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -82,6 +84,11 @@ export default function Client() {
   const handlePayment = (packageId: number) => {
     setSelectedPackageId(packageId);
     setPaymentModalOpen(true);
+  };
+
+  const handleUploadFile = (packageId: number) => {
+    setSelectedPackageId(packageId);
+    setFileUploadOpen(true);
   };
 
   const getStatusText = (status: string) => {
@@ -270,8 +277,10 @@ export default function Client() {
                     key={pkg.id}
                     package={pkg}
                     onPayment={handlePayment}
+                    onUploadFile={handleUploadFile}
                     getStatusText={getStatusText}
                     getStatusColor={getStatusColor}
+                    userRole="client"
                   />
                 ))}
               </div>
@@ -290,6 +299,13 @@ export default function Client() {
           open={paymentModalOpen}
           onOpenChange={setPaymentModalOpen}
           packageId={selectedPackageId}
+        />
+
+        <FileUploadModal
+          open={fileUploadOpen}
+          onOpenChange={setFileUploadOpen}
+          packageId={selectedPackageId}
+          fileType="proof"
         />
       </div>
     </div>
