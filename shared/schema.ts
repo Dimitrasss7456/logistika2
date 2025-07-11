@@ -27,12 +27,12 @@ export const sessions = pgTable(
 );
 
 // User roles enum
-export const userRoleEnum = pgEnum("user_role", ["admin", "logist", "client"]);
+export const userRoleEnum = pgEnum("user_role", ["admin", "manager", "logist", "client"]);
 
 // Package status enum
 export const packageStatusEnum = pgEnum("package_status", [
   "created_client",
-  "created_admin",
+  "created_manager",
   "sent_to_logist",
   "received_info",
   "package_received",
@@ -41,17 +41,17 @@ export const packageStatusEnum = pgEnum("package_status", [
   "client_received",
   "awaiting_processing_client",
   "confirmed_by_client",
-  "awaiting_payment_admin",
+  "awaiting_payment_manager",
   "awaiting_payment_client",
-  "awaiting_processing_admin",
-  "awaiting_shipping_admin",
+  "awaiting_processing_manager",
+  "awaiting_shipping_manager",
   "awaiting_shipping_client",
   "awaiting_shipping_logist",
   "sent_logist",
   "sent_by_logist",
   "sent_client",
   "paid_logist",
-  "paid_admin"
+  "paid_manager"
 ]);
 
 // Delivery type enum

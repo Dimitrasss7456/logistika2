@@ -4,7 +4,7 @@ export interface User {
   firstName?: string;
   lastName?: string;
   profileImageUrl?: string;
-  role: 'admin' | 'logist' | 'client';
+  role: 'admin' | 'manager' | 'logist' | 'client';
   isActive: boolean;
   telegramUsername?: string;
   createdAt: string;
@@ -52,7 +52,7 @@ export interface Package {
 
 export type PackageStatus = 
   | 'created_client'
-  | 'created_admin'
+  | 'created_manager'
   | 'sent_to_logist'
   | 'received_info'
   | 'package_received'
@@ -61,17 +61,17 @@ export type PackageStatus =
   | 'client_received'
   | 'awaiting_processing_client'
   | 'confirmed_by_client'
-  | 'awaiting_payment_admin'
+  | 'awaiting_payment_manager'
   | 'awaiting_payment_client'
-  | 'awaiting_processing_admin'
-  | 'awaiting_shipping_admin'
+  | 'awaiting_processing_manager'
+  | 'awaiting_shipping_manager'
   | 'awaiting_shipping_client'
   | 'awaiting_shipping_logist'
   | 'sent_logist'
   | 'sent_by_logist'
   | 'sent_client'
   | 'paid_logist'
-  | 'paid_admin';
+  | 'paid_manager';
 
 export interface Notification {
   id: number;

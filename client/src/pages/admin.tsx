@@ -468,6 +468,7 @@ function UserManagement() {
               <SelectContent>
                 <SelectItem value="all">Все роли</SelectItem>
                 <SelectItem value="admin">Администраторы</SelectItem>
+                <SelectItem value="manager">Менеджеры</SelectItem>
                 <SelectItem value="logist">Логисты</SelectItem>
                 <SelectItem value="client">Клиенты</SelectItem>
               </SelectContent>
@@ -645,6 +646,7 @@ function UserCard({ user, onRoleChange, onAccessToggle }: {
   const getRoleColor = (role: string) => {
     switch (role) {
       case 'admin': return 'bg-red-100 text-red-800';
+      case 'manager': return 'bg-purple-100 text-purple-800';
       case 'logist': return 'bg-blue-100 text-blue-800';
       case 'client': return 'bg-green-100 text-green-800';
       default: return 'bg-gray-100 text-gray-800';
@@ -654,6 +656,7 @@ function UserCard({ user, onRoleChange, onAccessToggle }: {
   const getRoleText = (role: string) => {
     switch (role) {
       case 'admin': return 'Администратор';
+      case 'manager': return 'Менеджер';
       case 'logist': return 'Логист';
       case 'client': return 'Клиент';
       default: return role;
@@ -700,6 +703,7 @@ function UserCard({ user, onRoleChange, onAccessToggle }: {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="admin">Администратор</SelectItem>
+              <SelectItem value="manager">Менеджер</SelectItem>
               <SelectItem value="logist">Логист</SelectItem>
               <SelectItem value="client">Клиент</SelectItem>
             </SelectContent>

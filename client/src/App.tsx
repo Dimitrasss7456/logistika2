@@ -9,6 +9,7 @@ import Home from "@/pages/home";
 import Login from "@/pages/login";
 import FAQ from "@/pages/faq";
 import Admin from "@/pages/admin";
+import Manager from "@/pages/manager";
 import Logist from "@/pages/logist";
 import Client from "@/pages/client";
 import NotFound from "@/pages/not-found";
@@ -40,6 +41,7 @@ function Router() {
           <Route path="/" component={Home} />
           <Route path="/home" component={Home} />
           <Route path="/admin" component={Admin} />
+          <Route path="/manager" component={Manager} />
           <Route path="/logist" component={Logist} />
           <Route path="/client" component={Client} />
         </>

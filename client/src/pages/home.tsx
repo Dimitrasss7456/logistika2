@@ -25,6 +25,7 @@ export default function Home() {
           </h1>
           <p className="text-gray-600">
             Роль: {user.role === 'admin' ? 'Администратор' : 
+                   user.role === 'manager' ? 'Менеджер' :
                    user.role === 'logist' ? 'Логист' : 'Клиент'}
           </p>
         </div>

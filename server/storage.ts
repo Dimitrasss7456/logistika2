@@ -276,14 +276,21 @@ export class DatabaseStorage implements IStorage {
 
     const [newPackage] = await db.insert(packages).values([packageWithNumber]).returning();
 
-    // Create notifications for admin and logist
-    await this.createNotification({
-      userId: packageData.logistId.toString(),
-      title: 'Новая посылка',
-      message: `Вам назначена новая посылка ${uniqueNumber}`,
-      type: 'package_status',
-      packageId: newPackage.id
-    });
+    // Automatically create manager package when client creates one
+    const managerPackageData = { ...packageData, uniqueNumber, status: 'created_manager' as const };
+    await db.insert(packages).values([managerPackageData]).returning();
+
+    // Create notifications for manager and logist
+    const managerUsers = await this.getUsersByRole('manager');
+    for (const manager of managerUsers) {
+      await this.createNotification({
+        userId: manager.id,
+        title: 'Новая посылка от клиента',
+        message: `Клиент создал новую посылку ${uniqueNumber}`,
+        type: 'package_status',
+        packageId: newPackage.id
+      });
+    }
 
     // Create admin notification
     const adminUsers = await this.getUsersByRole('admin');
