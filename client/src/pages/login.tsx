@@ -11,7 +11,7 @@ import { Package } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
 const loginSchema = z.object({
-  email: z.string().email("Неверный формат email"),
+  email: z.string().min(1, "Email или логин обязателен"),
   password: z.string().min(1, "Пароль обязателен"),
 });
 
@@ -48,7 +48,7 @@ export default function Login() {
       }
 
       const result = await response.json();
-      
+
       toast({
         title: "Вход выполнен",
         description: "Добро пожаловать в систему!",
@@ -79,7 +79,7 @@ export default function Login() {
       client: { email: "client@package.ru", password: "123456" },
       logist: { email: "logist@package.ru", password: "123456" },
     };
-    
+
     form.setValue("email", demoCredentials[role].email);
     form.setValue("password", demoCredentials[role].password);
     form.handleSubmit(onSubmit)();
@@ -149,7 +149,7 @@ export default function Login() {
                   id="email"
                   type="email"
                   {...form.register("email")}
-                  placeholder="your@email.com"
+                  placeholder="Введите email или логин"
                 />
                 {form.formState.errors.email && (
                   <p className="text-sm text-red-600 mt-1">

@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Package, Users, Settings, BarChart3 } from "lucide-react";
+import { Package, Users, Settings, BarChart3, Plus, Copy } from "lucide-react";
 import { usePackages, useUpdatePackageStatus } from "@/hooks/usePackages";
 import { useUsers, useUpdateUserRole, useToggleUserAccess, useLogists } from "@/hooks/useUsers";
 import { Package as PackageType, User } from "@/types";
@@ -16,6 +16,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle, XCircle, Edit, UserCheck, UserX } from "lucide-react";
 import { useLocation } from "wouter";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function Admin() {
   const { user } = useAuth();
@@ -364,11 +368,15 @@ function AdminPackageCard({
 function UserManagement() {
   const [selectedRole, setSelectedRole] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [generatedCredentials, setGeneratedCredentials] = useState<{login: string, password: string} | null>(null);
 
   const { data: users, isLoading: usersLoading } = useUsers(selectedRole === 'all' ? undefined : selectedRole);
   const { data: logists, isLoading: logistsLoading } = useLogists();
   const updateUserRole = useUpdateUserRole();
   const toggleUserAccess = useToggleUserAccess();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const filteredUsers = users?.filter((user: User) => {
     if (!searchTerm) return true;
@@ -389,6 +397,55 @@ function UserManagement() {
     toggleUserAccess.mutate({ userId, isActive: !currentAccess });
   };
 
+  const createUser = useMutation({
+    mutationFn: async (userData: any) => {
+      return await apiRequest("/api/users", {
+        method: "POST",
+        body: JSON.stringify(userData),
+      });
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      setGeneratedCredentials(data.credentials);
+      toast({
+        title: "Пользователь создан",
+        description: "Логин и пароль сгенерированы успешно",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось создать пользователя",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleCreateUser = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const userData = {
+      firstName: formData.get('firstName'),
+      lastName: formData.get('lastName'),
+      email: formData.get('email'),
+      telegramUsername: formData.get('telegramUsername'),
+      role: formData.get('role'),
+      location: formData.get('location'),
+      address: formData.get('address'),
+      supportsLockers: formData.get('supportsLockers') === 'on',
+      supportsOffices: formData.get('supportsOffices') === 'on',
+    };
+    createUser.mutate(userData);
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "Скопировано",
+      description: "Данные скопированы в буфер обмена",
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="mb-6">
@@ -396,7 +453,7 @@ function UserManagement() {
         <p className="text-gray-600">Управление ролями и доступом пользователей</p>
       </div>
 
-      {/* Filters */}
+      {/* Filters and Actions */}
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-wrap gap-4 items-center">
@@ -418,6 +475,117 @@ function UserManagement() {
                 <SelectItem value="client">Клиенты</SelectItem>
               </SelectContent>
             </Select>
+            <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+              <DialogTrigger asChild>
+                <Button className="flex items-center gap-2">
+                  <Plus className="h-4 w-4" />
+                  Создать пользователя
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Создать нового пользователя</DialogTitle>
+                </DialogHeader>
+                {generatedCredentials ? (
+                  <div className="space-y-4">
+                    <div className="bg-green-50 p-4 rounded-lg">
+                      <h4 className="font-medium text-green-800 mb-2">Пользователь создан!</h4>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">Логин:</span>
+                          <div className="flex items-center gap-2">
+                            <code className="bg-gray-100 px-2 py-1 rounded text-sm">{generatedCredentials.login}</code>
+                            <Button size="sm" variant="outline" onClick={() => copyToClipboard(generatedCredentials.login)}>
+                              <Copy className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">Пароль:</span>
+                          <div className="flex items-center gap-2">
+                            <code className="bg-gray-100 px-2 py-1 rounded text-sm">{generatedCredentials.password}</code>
+                            <Button size="sm" variant="outline" onClick={() => copyToClipboard(generatedCredentials.password)}>
+                              <Copy className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                      <p className="text-xs text-green-600 mt-2">
+                        Сохраните эти данные, они больше не будут показаны
+                      </p>
+                    </div>
+                    <Button onClick={() => {
+                      setGeneratedCredentials(null);
+                      setIsCreateModalOpen(false);
+                    }} className="w-full">
+                      Закрыть
+                    </Button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleCreateUser} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="firstName">Имя</Label>
+                        <Input id="firstName" name="firstName" required />
+                      </div>
+                      <div>
+                        <Label htmlFor="lastName">Фамилия</Label>
+                        <Input id="lastName" name="lastName" required />
+                      </div>
+                    </div>
+                    <div>
+                      <Label htmlFor="email">Email (опционально)</Label>
+                      <Input id="email" name="email" type="email" placeholder="Если не указан, будет сгенерирован" />
+                    </div>
+                    <div>
+                      <Label htmlFor="telegramUsername">Telegram</Label>
+                      <Input id="telegramUsername" name="telegramUsername" placeholder="@username" />
+                    </div>
+                    <div>
+                      <Label htmlFor="role">Роль</Label>
+                      <Select name="role" required>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Выберите роль" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="client">Клиент</SelectItem>
+                          <SelectItem value="logist">Логист</SelectItem>
+                          <SelectItem value="admin">Администратор</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div id="logist-fields" className="space-y-4">
+                      <div>
+                        <Label htmlFor="location">Локация (для логистов)</Label>
+                        <Input id="location" name="location" placeholder="Город" />
+                      </div>
+                      <div>
+                        <Label htmlFor="address">Адрес (для логистов)</Label>
+                        <Input id="address" name="address" placeholder="Полный адрес" />
+                      </div>
+                      <div className="flex gap-4">
+                        <div className="flex items-center space-x-2">
+                          <input type="checkbox" id="supportsLockers" name="supportsLockers" />
+                          <Label htmlFor="supportsLockers">Локеры</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <input type="checkbox" id="supportsOffices" name="supportsOffices" />
+                          <Label htmlFor="supportsOffices">Офисы</Label>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button type="submit" disabled={createUser.isPending} className="flex-1">
+                        {createUser.isPending ? "Создание..." : "Создать"}
+                      </Button>
+                      <Button type="button" variant="outline" onClick={() => setIsCreateModalOpen(false)}>
+                        Отмена
+                      </Button>
+                    </div>
+                  </form>
+                )}
+              </DialogContent>
+            </Dialog>
           </div>
         </CardContent>
       </Card>

@@ -101,35 +101,49 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async validateCredentials(email: string, password: string): Promise<User | null> {
-    // Hardcoded credentials for demo
-    const credentials = {
-      'admin@package.ru': { password: '123456', role: 'admin', id: 'admin-001' },
-      'logist@package.ru': { password: '123456', role: 'logist', id: 'logist-001' },
-      'client@package.ru': { password: '123456', role: 'client', id: 'client-001' }
-    };
+  async validateCredentials(emailOrLogin: string, password: string): Promise<User | null> {
+    console.log('validateCredentials called with:', emailOrLogin, password);
 
-    const cred = credentials[email as keyof typeof credentials];
-    if (cred && cred.password === password) {
-      // Check if user exists, if not create them
-      let user = await this.getUserByEmail(email);
-      if (!user) {
-        user = await this.createUser({
-          id: cred.id,
-          email: email,
-          firstName: cred.role === 'admin' ? 'Администратор' : cred.role === 'logist' ? 'Логист' : 'Клиент',
-          lastName: 'Системы',
-          role: cred.role as any,
-          isActive: true
-        });
-      }
-      return user;
+    // Try to find user by email first
+    let user = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, emailOrLogin))
+      .limit(1);
+
+    // If not found by email, try to find by generated login pattern
+    if (user.length === 0) {
+      user = await db
+        .select()
+        .from(users)
+        .where(like(users.email, `${emailOrLogin}@generated.local`))
+        .limit(1);
     }
+
+    console.log('Found user:', user);
+
+    if (user.length === 0) {
+      console.log('No user found');
+      return null;
+    }
+
+    const foundUser = user[0];
+
+    // Simple password check for demo
+    if (foundUser.passwordHash === password && foundUser.isActive) {
+      console.log('Password matches and user is active');
+      return foundUser;
+    }
+
+    console.log('Password does not match or user is inactive');
     return null;
   }
 
   async getUsersByRole(role: string): Promise<User[]> {
-    return await db.select().from(users).where(eq(users.role, role as any));
+    return await db
+      .select()
+      .from(users)
+      .where(eq(users.role, role as any));
   }
 
   async updateUserRole(userId: string, role: string): Promise<void> {
@@ -395,6 +409,20 @@ export class DatabaseStorage implements IStorage {
     return updatedPackage;
   }
 
+  async getAllUsers() {
+    return await db
+      .select()
+      .from(users)
+      .orderBy(users.createdAt);
+  }
+
+  async createUser(userData: any) {
+    const [newUser] = await db
+      .insert(users)
+      .values(userData)
+      .returning();
+    return newUser;
+  }
   // Notification operations
   async getNotifications(userId: string): Promise<Notification[]> {
     return await db

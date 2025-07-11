@@ -45,11 +45,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Доступ запрещен" });
       }
 
-      const users = await storage.getUsersByRole('client');
+      const role = req.query.role;
+      const users = role ? await storage.getUsersByRole(role) : await storage.getAllUsers();
       res.json(users);
     } catch (error) {
       console.error("Error fetching users:", error);
       res.status(500).json({ message: "Ошибка получения пользователей" });
+    }
+  });
+
+  app.post('/api/users', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = req.user;
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Доступ запрещен" });
+      }
+
+      const { firstName, lastName, email, role, telegramUsername } = req.body;
+      
+      // Generate login and password
+      const login = `${role}_${Date.now()}`;
+      const password = Math.random().toString(36).slice(-8);
+      
+      const newUser = await storage.createUser({
+        id: `${role}-${Date.now()}`,
+        email: email || `${login}@generated.local`,
+        firstName,
+        lastName,
+        telegramUsername,
+        role,
+        passwordHash: password,
+        isActive: true,
+      });
+
+      // If creating a logist, also create logist record
+      if (role === 'logist') {
+        await storage.createLogist({
+          userId: newUser.id,
+          location: req.body.location || 'Не указано',
+          address: req.body.address || 'Не указано',
+          supportsLockers: req.body.supportsLockers || false,
+          supportsOffices: req.body.supportsOffices || false,
+          isActive: true,
+        });
+      }
+
+      res.json({ 
+        user: newUser, 
+        credentials: { login, password },
+        message: "Пользователь создан успешно" 
+      });
+    } catch (error) {
+      console.error("Error creating user:", error);
+      res.status(500).json({ message: "Ошибка создания пользователя" });
     }
   });
 

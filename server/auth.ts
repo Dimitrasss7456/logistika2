@@ -37,7 +37,7 @@ export async function setupAuth(app: Express) {
       
       if (!email || !password) {
         console.log('Missing email or password');
-        return res.status(400).json({ message: "Email и пароль обязательны" });
+        return res.status(400).json({ message: "Email/логин и пароль обязательны" });
       }
 
       console.log('Calling validateCredentials with:', email, password);
