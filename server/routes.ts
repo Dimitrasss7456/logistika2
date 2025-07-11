@@ -63,9 +63,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { firstName, lastName, email, role, telegramUsername } = req.body;
       
-      // Generate login and password
+      // Generate login and password - use standard password for all users
       const login = `${role}_${Date.now()}`;
-      const password = Math.random().toString(36).slice(-8);
+      const password = "123456"; // Standard password for all users
       
       const newUser = await storage.createUser({
         id: `${role}-${Date.now()}`,

@@ -27,6 +27,7 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: UpsertUser): Promise<User>;
   upsertUser(user: UpsertUser): Promise<User>;
+  getAllUsers(): Promise<User[]>;
   getUsersByRole(role: string): Promise<User[]>;
   updateUserRole(userId: string, role: string): Promise<void>;
   toggleUserAccess(userId: string, isActive: boolean): Promise<void>;
@@ -137,6 +138,10 @@ export class DatabaseStorage implements IStorage {
 
     console.log('Password does not match or user is inactive');
     return null;
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users);
   }
 
   async getUsersByRole(role: string): Promise<User[]> {

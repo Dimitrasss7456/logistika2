@@ -399,10 +399,7 @@ function UserManagement() {
 
   const createUser = useMutation({
     mutationFn: async (userData: any) => {
-      return await apiRequest("/api/users", {
-        method: "POST",
-        body: JSON.stringify(userData),
-      });
+      return await apiRequest("POST", "/api/users", userData);
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
