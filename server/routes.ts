@@ -239,16 +239,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Доступ запрещен" });
       }
 
-      const validatedData = insertPackageSchema.parse({
-        ...req.body,
-        clientId: currentUser.id,
-      });
+      // Validate required fields manually since insertPackageSchema expects all fields
+      const requiredFields = {
+        logistId: req.body.logistId,
+        telegramUsername: req.body.telegramUsername,
+        recipientName: req.body.recipientName,
+        deliveryType: req.body.deliveryType,
+        courierService: req.body.courierService,
+        trackingNumber: req.body.trackingNumber,
+        itemName: req.body.itemName,
+        shopName: req.body.shopName,
+      };
 
-      const createdPackage = await storage.createPackage(validatedData);
+      // Check for missing required fields
+      for (const [key, value] of Object.entries(requiredFields)) {
+        if (!value) {
+          return res.status(400).json({ message: `Поле ${key} обязательно для заполнения` });
+        }
+      }
+
+      const packageData = {
+        clientId: currentUser.id,
+        logistId: parseInt(req.body.logistId),
+        telegramUsername: req.body.telegramUsername,
+        recipientName: req.body.recipientName,
+        deliveryType: req.body.deliveryType,
+        lockerAddress: req.body.lockerAddress || null,
+        lockerCode: req.body.lockerCode || null,
+        courierService: req.body.courierService,
+        trackingNumber: req.body.trackingNumber,
+        estimatedDeliveryDate: req.body.estimatedDeliveryDate ? new Date(req.body.estimatedDeliveryDate) : null,
+        itemName: req.body.itemName,
+        shopName: req.body.shopName,
+        comments: req.body.comments || null,
+        status: 'created',
+        adminComments: null,
+        paymentAmount: null,
+        paymentDetails: null,
+      };
+
+      const createdPackage = await storage.createPackage(packageData);
       
       // Create notification for admin
       await storage.createNotification({
-        userId: 'admin-001', // Admin user ID
+        userId: 'admin-demo', // Admin user ID
         title: 'Новая посылка',
         message: `Создана новая посылка #${createdPackage.uniqueNumber}`,
         type: 'package_status',
@@ -258,7 +292,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(createdPackage);
     } catch (error) {
       console.error("Error creating package:", error);
-      res.status(500).json({ message: "Ошибка создания посылки" });
+      console.error("Request body:", req.body);
+      res.status(500).json({ message: "Ошибка создания посылки", error: error.message });
     }
   });
 
