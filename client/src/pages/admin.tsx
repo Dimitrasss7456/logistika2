@@ -16,7 +16,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle, XCircle, Edit, UserCheck, UserX } from "lucide-react";
 import { useLocation } from "wouter";
-import { useEffect } from "react";
 
 export default function Admin() {
   const { user } = useAuth();
