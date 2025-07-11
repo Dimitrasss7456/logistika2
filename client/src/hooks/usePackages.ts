@@ -76,6 +76,7 @@ export function useCreatePackage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/packages'] });
+      queryClient.refetchQueries({ queryKey: ['/api/packages'] });
     },
   });
 }
