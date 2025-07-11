@@ -30,7 +30,7 @@ export interface IStorage {
   getUsersByRole(role: string): Promise<User[]>;
   updateUserRole(userId: string, role: string): Promise<void>;
   toggleUserAccess(userId: string, isActive: boolean): Promise<void>;
-  
+
   // Auth operations
   validateCredentials(email: string, password: string): Promise<User | null>;
 
@@ -150,7 +150,7 @@ export class DatabaseStorage implements IStorage {
   async getLogists(): Promise<(Logist & { user: User })[]> {
     const logistsList = await db.select().from(logists);
     const result = [];
-    
+
     for (const logist of logistsList) {
       const [user] = await db.select().from(users).where(eq(users.id, logist.userId));
       result.push({
@@ -158,7 +158,7 @@ export class DatabaseStorage implements IStorage {
         user: user
       });
     }
-    
+
     return result;
   }
 
@@ -189,7 +189,7 @@ export class DatabaseStorage implements IStorage {
     search?: string;
   }): Promise<(Package & { client: User; logist: Logist & { user: User } })[]> {
     const allPackages = await db.select().from(packages).orderBy(desc(packages.createdAt));
-    
+
     const result = [];
     for (const pkg of allPackages) {
       // Apply filters
@@ -204,16 +204,16 @@ export class DatabaseStorage implements IStorage {
           !pkg.itemName.toLowerCase().includes(searchLower)
         ) continue;
       }
-      
+
       const [client] = await db.select().from(users).where(eq(users.id, pkg.clientId));
       const [logist] = await db.select().from(logists).where(eq(logists.id, pkg.logistId));
-      
+
       let logistUser = null;
       if (logist) {
         const [user] = await db.select().from(users).where(eq(users.id, logist.userId));
         logistUser = user;
       }
-      
+
       result.push({
         ...pkg,
         client: client || null,
@@ -223,7 +223,7 @@ export class DatabaseStorage implements IStorage {
         }
       } as any);
     }
-    
+
     return result;
   }
 
@@ -254,9 +254,9 @@ export class DatabaseStorage implements IStorage {
     // Generate unique package number
     const uniqueNumber = `PKG-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
     const packageWithNumber = { ...packageData, uniqueNumber, status: 'created_client' as const };
-    
+
     const [newPackage] = await db.insert(packages).values([packageWithNumber]).returning();
-    
+
     // Create notifications for admin and logist
     await this.createNotification({
       userId: packageData.logistId.toString(),
@@ -291,10 +291,10 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(packages.id, id))
       .returning();
-      
+
     // Create notifications based on status change
     await this.createStatusChangeNotifications(updatedPackage, status);
-    
+
     return updatedPackage;
   }
 
@@ -345,7 +345,7 @@ export class DatabaseStorage implements IStorage {
           packageId: pkg.id
         });
       }
-      
+
       // Send to logist
       if ('logist' in notification) {
         await this.createNotification({
@@ -356,7 +356,7 @@ export class DatabaseStorage implements IStorage {
           packageId: pkg.id
         });
       }
-      
+
       // Send to admin
       if ('admin' in notification) {
         const adminUsers = await this.getUsersByRole('admin');
@@ -430,7 +430,7 @@ export class DatabaseStorage implements IStorage {
       .from(messages)
       .where(eq(messages.packageId, packageId))
       .orderBy(desc(messages.createdAt));
-    
+
     const result = [];
     for (const message of messagesList) {
       const [sender] = await db.select().from(users).where(eq(users.id, message.senderId));
@@ -439,7 +439,7 @@ export class DatabaseStorage implements IStorage {
         sender: sender
       });
     }
-    
+
     return result;
   }
 

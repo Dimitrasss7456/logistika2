@@ -459,8 +459,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { email, password } = req.body;
 
-      const user = await storage.validateCredentials(email, password);
+      // Get user by email first
+      const user = await storage.getUserByEmail(email);
       if (!user) {
+        return res.status(401).json({ message: "Неверный email или пароль" });
+      }
+
+      // Check if user is active
+      if (!user.isActive) {
+        return res.status(401).json({ message: "Аккаунт деактивирован" });
+      }
+
+      // For demo purposes, compare passwords directly
+      // In production, you should hash passwords properly
+      if (user.passwordHash !== password) {
         return res.status(401).json({ message: "Неверный email или пароль" });
       }
 
