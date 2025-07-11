@@ -263,13 +263,11 @@ export class DatabaseStorage implements IStorage {
   async createPackage(packageData: InsertPackage): Promise<Package> {
     // Generate unique package number
     const uniqueNumber = `PKG-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
-    const packageWithNumber = { ...packageData, uniqueNumber, status: 'created_client' as const };
+    const packageWithNumber = { ...packageData, uniqueNumber, status: 'created' as const };
 
     const [newPackage] = await db.insert(packages).values([packageWithNumber]).returning();
 
-    // Automatically create manager package when client creates one
-    const managerPackageData = { ...packageData, uniqueNumber, status: 'created_manager' as const };
-    await db.insert(packages).values([managerPackageData]).returning();
+    // Note: Single package created, no duplicate manager package needed
 
     // Create notifications for manager and logist
     const managerUsers = await this.getUsersByRole('manager');
@@ -412,20 +410,7 @@ export class DatabaseStorage implements IStorage {
     return updatedPackage;
   }
 
-  async getAllUsers() {
-    return await db
-      .select()
-      .from(users)
-      .orderBy(users.createdAt);
-  }
 
-  async createUser(userData: any) {
-    const [newUser] = await db
-      .insert(users)
-      .values(userData)
-      .returning();
-    return newUser;
-  }
   // Notification operations
   async getNotifications(userId: string): Promise<Notification[]> {
     return await db

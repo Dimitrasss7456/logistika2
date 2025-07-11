@@ -97,7 +97,7 @@ export const packages = pgTable("packages", {
   comments: text("comments"),
 
   // Status and workflow
-  status: packageStatusEnum("status").default("created_client").notNull(),
+  status: packageStatusEnum("status").default("created").notNull(),
   adminComments: text("admin_comments"),
   paymentAmount: integer("payment_amount"), // in kopecks
   paymentDetails: text("payment_details"),
