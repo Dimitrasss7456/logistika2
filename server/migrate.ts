@@ -1,11 +1,10 @@
-
 import { db } from "./db";
 import { sql } from "drizzle-orm";
 
 async function createTables() {
   try {
     console.log("Creating tables...");
-    
+
     // Create users table
     await db.execute(sql`
       CREATE TABLE IF NOT EXISTS users (
