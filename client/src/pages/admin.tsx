@@ -22,15 +22,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 
 export default function Admin() {
-  const { user } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const [, setLocation] = useLocation();
-
-  useEffect(() => {
-    if (user && user.role !== 'admin') {
-      setLocation(`/${user.role}`);
-    }
-  }, [user, setLocation]);
-  const { isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -42,15 +35,22 @@ export default function Admin() {
     if (!isLoading && !isAuthenticated) {
       toast({
         title: "Неавторизованный доступ",
-        description: "Вы не авторизованы. Выполняется вход...",
+        description: "Вы не авторизованы. Перенаправляем на страницу входа...",
         variant: "destructive",
       });
       setTimeout(() => {
-        window.location.href = "/api/login";
+        setLocation("/login");
       }, 500);
       return;
     }
-  }, [isAuthenticated, isLoading, toast]);
+  }, [isAuthenticated, isLoading, toast, setLocation]);
+
+  // Redirect if user is not admin
+  useEffect(() => {
+    if (user && user.role !== 'admin') {
+      setLocation(`/${user.role}`);
+    }
+  }, [user, setLocation]);
 
   const { data: packages, isLoading: packagesLoading } = usePackages({
     status: statusFilter === "all" ? "" : statusFilter,
@@ -76,7 +76,7 @@ export default function Admin() {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          setLocation("/login");
         }, 500);
         return;
       }

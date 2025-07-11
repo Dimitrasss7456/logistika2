@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Package } from "lucide-react";
 import { Link, useLocation } from "wouter";
+import { queryClient } from "@/lib/queryClient";
 
 const loginSchema = z.object({
   login: z.string().min(1, "Логин обязателен").regex(/^[a-zA-Z0-9_-]+$/, "Логин может содержать только буквы, цифры, дефисы и подчеркивания"),
@@ -49,21 +50,30 @@ export default function Login() {
 
       const result = await response.json();
 
+      // Update the auth cache with the user data
+      queryClient.setQueryData(["/api/auth/user"], result.user);
+      
+      // Invalidate and refetch auth data to ensure it's current
+      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+
       toast({
         title: "Вход выполнен",
         description: "Добро пожаловать в систему!",
       });
 
-      // Redirect based on role
-      if (result.user.role === "admin") {
-        navigate("/admin");
-      } else if (result.user.role === "manager") {
-        navigate("/manager");
-      } else if (result.user.role === "logist") {
-        navigate("/logist");
-      } else {
-        navigate("/client");
-      }
+      // Small delay to ensure state updates
+      setTimeout(() => {
+        // Redirect based on role
+        if (result.user.role === "admin") {
+          navigate("/admin");
+        } else if (result.user.role === "manager") {
+          navigate("/manager");
+        } else if (result.user.role === "logist") {
+          navigate("/logist");
+        } else {
+          navigate("/client");
+        }
+      }, 100);
     } catch (error) {
       toast({
         title: "Ошибка входа",
