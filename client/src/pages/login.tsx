@@ -85,6 +85,45 @@ export default function Login() {
     form.handleSubmit(onSubmit)();
   };
 
+  const handlePasswordReset = async () => {
+    const email = form.getValues("email");
+    if (!email) {
+      toast({
+        title: "Ошибка",
+        description: "Введите email для сброса пароля",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Ошибка запроса сброса пароля");
+      }
+
+      toast({
+        title: "Запрос отправлен",
+        description: "Администратор получил уведомление и свяжется с вами в Telegram",
+      });
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: error instanceof Error ? error.message : "Произошла ошибка",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-neutral-bg flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
@@ -179,11 +218,15 @@ export default function Login() {
             </div>
 
             <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600">
-                Нет аккаунта?{" "}
-                <Link href="/register" className="text-primary hover:text-primary-dark">
-                  Зарегистрироваться
-                </Link>
+              <button
+                type="button"
+                onClick={handlePasswordReset}
+                className="text-primary hover:text-primary-dark text-sm"
+              >
+                Сбросить пароль
+              </button>
+              <p className="text-xs text-gray-500 mt-2">
+                Запрос будет отправлен администратору
               </p>
             </div>
           </CardContent>

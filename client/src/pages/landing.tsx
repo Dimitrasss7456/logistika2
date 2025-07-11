@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Package, Users, Shield, Bell, UserPlus, LogIn } from "lucide-react";
+import { Package, Users, Shield, LogIn } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -57,7 +57,7 @@ export default function Landing() {
           <p className="text-xl text-gray-600 mb-8">
             Профессиональная платформа для отслеживания и управления доставкой посылок
           </p>
-          
+
           <div className="max-w-md mx-auto mb-8">
             <Card>
               <CardHeader>
@@ -182,7 +182,7 @@ export default function Landing() {
                 Клиент выбирает логиста и заполняет форму с деталями посылки
               </p>
             </div>
-            
+
             <div className="text-center">
               <div className="bg-primary/10 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
                 <span className="text-primary font-bold text-xl">2</span>
@@ -192,7 +192,7 @@ export default function Landing() {
                 Администратор координирует процесс между клиентом и логистом
               </p>
             </div>
-            
+
             <div className="text-center">
               <div className="bg-primary/10 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
                 <span className="text-primary font-bold text-xl">3</span>
@@ -210,7 +210,7 @@ export default function Landing() {
             Готовы начать?
           </h2>
           <p className="text-gray-600 mb-6">
-            Войдите в систему или создайте аккаунт для доступа к панели управления
+            Войдите в систему для доступа к панели управления
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/login">
@@ -219,12 +219,9 @@ export default function Landing() {
                 Войти в систему
               </Button>
             </Link>
-            <Link href="/register">
-              <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-white px-8 py-3 flex items-center gap-2">
-                <UserPlus className="h-5 w-5" />
-                Создать аккаунт
-              </Button>
-            </Link>
+            <p className="text-gray-600">
+              Аккаунты создаются администратором
+            </p>
           </div>
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-500 mb-4">Или используйте демо-доступ:</p>

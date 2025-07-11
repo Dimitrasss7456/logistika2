@@ -413,45 +413,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Registration and login for demo accounts
-  app.post('/api/auth/register', async (req, res) => {
+  // Password reset request
+  app.post('/api/auth/reset-password', async (req, res) => {
     try {
-      const { email, password, firstName, lastName, role, telegramUsername, location, address, supportsLockers, supportsOffices } = req.body;
+      const { email } = req.body;
 
-      // Check if user already exists
-      const existingUser = await storage.getUserByEmail(email);
-      if (existingUser) {
-        return res.status(400).json({ message: "Пользователь с таким email уже существует" });
+      if (!email) {
+        return res.status(400).json({ message: "Email обязателен" });
       }
 
-      // Create user
-      const user = await storage.createUser({
-        id: Date.now().toString(), // Simple ID generation for demo
-        email,
-        firstName,
-        lastName,
-        role,
-        telegramUsername,
-        isActive: true,
-        passwordHash: password, // In production, hash this properly
-      });
+      // Check if user exists
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(404).json({ message: "Пользователь с таким email не найден" });
+      }
 
-      // Create logist profile if role is logist
-      if (role === 'logist') {
-        await storage.createLogist({
-          userId: user.id,
-          location,
-          address,
-          supportsLockers: supportsLockers || false,
-          supportsOffices: supportsOffices || false,
-          isActive: true,
+      // Create notification for all admin users
+      const adminUsers = await storage.getUsersByRole('admin');
+      for (const admin of adminUsers) {
+        await storage.createNotification({
+          userId: admin.id,
+          title: 'Запрос сброса пароля',
+          message: `Пользователь ${user.firstName} ${user.lastName} (${user.email}) запросил сброс пароля. Telegram: ${user.telegramUsername || 'не указан'}`,
+          type: 'password_reset',
         });
       }
 
-      res.json({ message: "Регистрация успешна", user: { id: user.id, email: user.email, role: user.role } });
+      res.json({ message: "Запрос на сброс пароля отправлен администратору" });
     } catch (error) {
-      console.error("Registration error:", error);
-      res.status(500).json({ message: "Ошибка регистрации" });
+      console.error("Password reset request error:", error);
+      res.status(500).json({ message: "Ошибка обработки запроса" });
     }
   });
 

@@ -91,7 +91,7 @@ export const packages = pgTable("packages", {
   uniqueNumber: varchar("unique_number").unique().notNull(),
   clientId: varchar("client_id").references(() => users.id).notNull(),
   logistId: integer("logist_id").references(() => logists.id).notNull(),
-  
+
   // Package details
   telegramUsername: varchar("telegram_username").notNull(),
   recipientName: varchar("recipient_name").notNull(),
@@ -104,13 +104,13 @@ export const packages = pgTable("packages", {
   itemName: text("item_name").notNull(),
   shopName: text("shop_name").notNull(),
   comments: text("comments"),
-  
+
   // Status and workflow
   status: packageStatusEnum("status").default("created_client").notNull(),
   adminComments: text("admin_comments"),
   paymentAmount: integer("payment_amount"), // in kopecks
   paymentDetails: text("payment_details"),
-  
+
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -236,9 +236,12 @@ export const insertPackageSchema = createInsertSchema(packages).omit({
   updatedAt: true,
 });
 
-export const insertNotificationSchema = createInsertSchema(notifications).omit({
-  id: true,
-  createdAt: true,
+export const insertNotificationSchema = z.object({
+  userId: z.string(),
+  title: z.string(),
+  message: z.string(),
+  type: z.enum(['package_status', 'system', 'password_reset']).default('system'),
+  packageId: z.number().optional(),
 });
 
 export const insertMessageSchema = createInsertSchema(messages).omit({
