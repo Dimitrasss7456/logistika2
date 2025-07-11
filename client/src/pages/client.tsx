@@ -67,7 +67,7 @@ export default function Client() {
 
   const { data: packages, isLoading: packagesLoading } = usePackages({
     clientId: user?.id,
-    status: statusFilter || undefined,
+    status: statusFilter && statusFilter !== "all" ? statusFilter : undefined,
     search: searchTerm || undefined,
   });
 
@@ -89,17 +89,16 @@ export default function Client() {
   };
 
   // Filter packages based on search and filters
-  const filteredPackages = packages?.filter(pkg => {
+  const filteredPackages = packages?.filter((pkg: Package) => {
     const matchesSearch = !searchTerm || 
       pkg.uniqueNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       pkg.itemName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       pkg.recipientName.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesStatus = !statusFilter || pkg.status === statusFilter;
+    const matchesStatus = !statusFilter || statusFilter === "all" || pkg.status === statusFilter;
     
-    const matchesAddress = !addressFilter || 
-      pkg.logist.location.toLowerCase().includes(addressFilter.toLowerCase()) ||
-      pkg.logist.address.toLowerCase().includes(addressFilter.toLowerCase());
+    const matchesAddress = !addressFilter || addressFilter === "all" || 
+      pkg.logist?.location === addressFilter;
 
     return matchesSearch && matchesStatus && matchesAddress;
   });
@@ -219,7 +218,7 @@ export default function Client() {
                       <SelectValue placeholder="Фильтр по статусу" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Все статусы</SelectItem>
+                      <SelectItem value="all">Все статусы</SelectItem>
                       {Object.entries(CLIENT_STATUSES).map(([key, label]) => (
                         <SelectItem key={key} value={key}>{label}</SelectItem>
                       ))}
@@ -230,7 +229,7 @@ export default function Client() {
                       <SelectValue placeholder="Фильтр по адресу" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Все адреса</SelectItem>
+                      <SelectItem value="all">Все адреса</SelectItem>
                       {logists?.map((logist: Logist) => (
                         <SelectItem key={logist.id} value={logist.location}>
                           {logist.location}

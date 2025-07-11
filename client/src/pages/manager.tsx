@@ -150,7 +150,7 @@ export default function Manager() {
                   <SelectValue placeholder="Все статусы" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Все статусы</SelectItem>
+                  <SelectItem value="all">Все статусы</SelectItem>
                   <SelectItem value="created_manager">Создана</SelectItem>
                   <SelectItem value="sent_to_logist">Передана логисту</SelectItem>
                   <SelectItem value="logist_confirmed">Логист подтвердил</SelectItem>
