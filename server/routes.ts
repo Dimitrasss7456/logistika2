@@ -191,6 +191,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           filters.logistId = logist.id;
         }
       }
+      // Manager and admin see all packages (no filtering)
 
       // Additional filters from query params
       if (req.query.status) filters.status = req.query.status;

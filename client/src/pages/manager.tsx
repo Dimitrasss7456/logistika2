@@ -53,7 +53,7 @@ export default function Manager() {
 
   const { data: packages, isLoading: packagesLoading, error: packagesError } = usePackages({
     search: searchTerm,
-    status: statusFilter || undefined,
+    status: statusFilter === "all" ? undefined : statusFilter || undefined,
   });
 
   const { data: users, isLoading: usersLoading } = useUsers();
