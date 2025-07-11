@@ -57,7 +57,21 @@ export function useCreatePackage() {
       shopName: string;
       comments?: string;
     }) => {
-      const response = await apiRequest('POST', '/api/packages', packageData);
+      console.log('Sending package data:', packageData);
+      const response = await fetch('/api/packages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(packageData),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `HTTP ${response.status}`);
+      }
+      
       return response.json();
     },
     onSuccess: () => {

@@ -387,10 +387,14 @@ function CreatePackageDialog({ open, onOpenChange, logist }: {
     if (!logist) return;
 
     try {
+      console.log('Creating package with data:', {
+        ...formData,
+        logistId: logist.id
+      });
+      
       await createPackage.mutateAsync({
         ...formData,
-        logistId: logist.id,
-        status: 'created'
+        logistId: logist.id
       });
       
       toast({
@@ -413,9 +417,10 @@ function CreatePackageDialog({ open, onOpenChange, logist }: {
         comments: ''
       });
     } catch (error) {
+      console.error('Package creation error:', error);
       toast({
         title: "Ошибка",
-        description: "Не удалось создать посылку",
+        description: error?.message || "Не удалось создать посылку",
         variant: "destructive",
       });
     }
