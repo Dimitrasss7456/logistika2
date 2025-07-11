@@ -182,16 +182,17 @@ export default function Manager() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">Все статусы</SelectItem>
-                        <SelectItem value="created_manager">Создана</SelectItem>
-                        <SelectItem value="sent_to_logist_manager">Передана логисту</SelectItem>
-                        <SelectItem value="logist_confirmed_manager">Логист подтвердил</SelectItem>
-                        <SelectItem value="info_sent_to_client_manager">Передана клиенту</SelectItem>
-                        <SelectItem value="confirmed_by_client_manager">Подтверждена клиентом</SelectItem>
-                        <SelectItem value="awaiting_payment_manager">Ожидает оплаты</SelectItem>
-                        <SelectItem value="awaiting_processing_manager">Ожидает обработки</SelectItem>
-                        <SelectItem value="awaiting_shipping_manager">Ожидает отправки</SelectItem>
-                        <SelectItem value="shipped_by_logist_manager">Отправлена логистом</SelectItem>
-                        <SelectItem value="paid_manager">Оплачена</SelectItem>
+                        <SelectItem value="created">Создана</SelectItem>
+                        <SelectItem value="sent_to_logist">Передана логисту</SelectItem>
+                        <SelectItem value="received_by_logist">Получена логистом</SelectItem>
+                        <SelectItem value="logist_confirmed">Логист подтвердил</SelectItem>
+                        <SelectItem value="info_sent_to_client">Передана клиенту</SelectItem>
+                        <SelectItem value="confirmed_by_client">Подтверждена клиентом</SelectItem>
+                        <SelectItem value="awaiting_payment">Ожидает оплаты</SelectItem>
+                        <SelectItem value="awaiting_processing">Ожидает обработки</SelectItem>
+                        <SelectItem value="awaiting_shipping">Ожидает отправки</SelectItem>
+                        <SelectItem value="shipped">Отправлена</SelectItem>
+                        <SelectItem value="paid">Оплачена</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

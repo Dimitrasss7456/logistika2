@@ -21,7 +21,7 @@ const upload = multer({
     const allowedTypes = /jpeg|jpg|png|gif|pdf|doc|docx|mp4|mov|avi/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
     const mimetype = allowedTypes.test(file.mimetype);
-    
+
     if (mimetype && extname) {
       return cb(null, true);
     } else {
@@ -41,7 +41,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/users', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = req.user;
-      if (currentUser?.role !== 'admin') {
+      if (currentUser?.role !== 'admin' && currentUser?.role !== 'manager') {
         return res.status(403).json({ message: "Доступ запрещен" });
       }
 
@@ -57,16 +57,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/users', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = req.user;
-      if (currentUser?.role !== 'admin') {
+      if (currentUser?.role !== 'admin' && currentUser?.role !== 'manager') {
         return res.status(403).json({ message: "Доступ запрещен" });
       }
 
       const { firstName, lastName, email, role, telegramUsername, login, password } = req.body;
-      
+
       // Use provided login and password
       const finalLogin = login || `${role}_${Date.now()}`;
       const finalPassword = password || "123456";
-      
+
       const newUser = await storage.createUser({
         id: `${role}-${Date.now()}`,
         email: email || `${finalLogin}@generated.local`,
@@ -105,7 +105,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch('/api/users/:id/role', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = req.user;
-      if (currentUser?.role !== 'admin') {
+      if (currentUser?.role !== 'admin' && currentUser?.role !== 'manager') {
         return res.status(403).json({ message: "Доступ запрещен" });
       }
 
@@ -121,7 +121,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch('/api/users/:id/access', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = req.user;
-      if (currentUser?.role !== 'admin') {
+      if (currentUser?.role !== 'admin' && currentUser?.role !== 'manager') {
         return res.status(403).json({ message: "Доступ запрещен" });
       }
 
@@ -209,7 +209,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const packageId = parseInt(req.params.id);
       const packageData = await storage.getPackageById(packageId);
-      
+
       if (!packageData) {
         return res.status(404).json({ message: "Посылка не найдена" });
       }
@@ -280,7 +280,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       const createdPackage = await storage.createPackage(packageData);
-      
+
       // Create notification for admin
       await storage.createNotification({
         userId: 'admin-demo', // Admin user ID
@@ -302,14 +302,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const packageId = parseInt(req.params.id);
       const { status, adminComments } = req.body;
-      
+
       const currentUser = req.user;
-      if (currentUser?.role !== 'admin') {
+      if (currentUser?.role !== 'admin' && currentUser?.role !== 'manager') {
         return res.status(403).json({ message: "Доступ запрещен" });
       }
 
       const updatedPackage = await storage.updatePackageStatus(packageId, status, adminComments);
-      
+
       // Create notification for client and logist
       const packageData = await storage.getPackageById(packageId);
       if (packageData) {
@@ -339,7 +339,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const packageId = parseInt(req.params.id);
       const { confirmed } = req.body;
-      
+
       const newStatus = confirmed ? 'confirmed_by_client' : 'awaiting_processing_client';
       const updatedPackage = await storage.updatePackageStatus(packageId, newStatus);
       res.json(updatedPackage);
@@ -370,15 +370,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const currentUser = req.user;
       const packageId = parseInt(req.params.id);
       const { paymentDetails, paymentAmount } = req.body;
-      
+
       // Update package with payment info
       await storage.updatePackage(packageId, { paymentDetails, paymentAmount });
-      
+
       let newStatus = 'awaiting_processing_admin';
       if (currentUser?.role === 'client') {
         newStatus = 'awaiting_processing_admin';
       }
-      
+
       const updatedPackage = await storage.updatePackageStatus(packageId, newStatus);
       res.json(updatedPackage);
     } catch (error) {
@@ -391,14 +391,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const currentUser = req.user;
       const packageId = parseInt(req.params.id);
-      
+
       let newStatus = '';
       if (currentUser?.role === 'logist') {
         newStatus = 'sent_by_logist';
       } else if (currentUser?.role === 'admin') {
         newStatus = 'sent_client';
       }
-      
+
       const updatedPackage = await storage.updatePackageStatus(packageId, newStatus);
       res.json(updatedPackage);
     } catch (error) {
@@ -445,7 +445,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const currentUser = req.user;
       const packageId = parseInt(req.params.id);
-      
+
       const message = await storage.createMessage({
         packageId,
         senderId: currentUser.id,
