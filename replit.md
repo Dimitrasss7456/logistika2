@@ -134,6 +134,7 @@ This is a full-stack web application for managing package logistics and deliveri
 - July 08, 2025. Implemented dual authentication system supporting both Replit OAuth and demo login with test credentials for easy role switching. Added logout functionality and resolved environment variable issues.
 - July 08, 2025. Fixed OpenID client deployment error by making Replit OAuth conditional. System now works in production without REPL_ID/OpenID requirements, falling back to demo credentials only.
 - January 11, 2025. Added comprehensive registration system for clients and logists with full form validation. Implemented all 15+ package status workflow according to ТЗ specifications. Created enhanced package management with role-based views and actions. Added FAQ page, comprehensive UI components (Progress, Accordion, Checkbox, Label), and improved package status tracking with visual progress indicators. System now fully operational with complete workflow functionality.
+- January 11, 2025. Implemented detailed technical specifications per ТЗ requirements. Updated status system to simplified 11-status workflow (created, sent_to_logist, received_by_logist, logist_confirmed, info_sent_to_client, confirmed_by_client, awaiting_payment, awaiting_processing, awaiting_shipping, shipped, paid). Created comprehensive client interface with two-tab layout (logists selection and package management). Added role-based status display utilities and package creation modal with full form validation. Fixed authentication issues and database schema updates.
 
 ## User Preferences
 

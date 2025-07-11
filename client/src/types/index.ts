@@ -51,27 +51,18 @@ export interface Package {
 }
 
 export type PackageStatus = 
-  | 'created_client'
-  | 'created_manager'
-  | 'sent_to_logist'
-  | 'received_info'
-  | 'package_received'
-  | 'logist_confirmed'
-  | 'info_sent_to_client'
-  | 'client_received'
-  | 'awaiting_processing_client'
-  | 'confirmed_by_client'
-  | 'awaiting_payment_manager'
-  | 'awaiting_payment_client'
-  | 'awaiting_processing_manager'
-  | 'awaiting_shipping_manager'
-  | 'awaiting_shipping_client'
-  | 'awaiting_shipping_logist'
-  | 'sent_logist'
-  | 'sent_by_logist'
-  | 'sent_client'
-  | 'paid_logist'
-  | 'paid_manager';
+  // Общие статусы для всех
+  | 'created' // Создана
+  | 'sent_to_logist' // Передана логисту
+  | 'received_by_logist' // Получена логистом
+  | 'logist_confirmed' // Логист подтвердил получение
+  | 'info_sent_to_client' // Передана информация клиенту
+  | 'confirmed_by_client' // Подтверждена клиентом
+  | 'awaiting_payment' // Ожидает оплаты
+  | 'awaiting_processing' // Ожидает обработки
+  | 'awaiting_shipping' // Ожидает отправки
+  | 'shipped' // Отправлена
+  | 'paid'; // Оплачена
 
 export interface Notification {
   id: number;
