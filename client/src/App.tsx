@@ -40,6 +40,7 @@ function Router() {
       ) : (
         <>
           <Route path="/" component={Home} />
+          <Route path="/home" component={Home} />
           <Route path="/admin" component={Admin} />
           <Route path="/logist" component={Logist} />
           <Route path="/client" component={Client} />

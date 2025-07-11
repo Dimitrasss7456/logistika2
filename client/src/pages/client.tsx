@@ -25,7 +25,13 @@ export default function Client() {
 
   useEffect(() => {
     if (user && user.role !== 'client') {
-      setLocation(`/${user.role}`);
+      if (user.role === 'admin') {
+        setLocation('/admin');
+      } else if (user.role === 'logist') {
+        setLocation('/logist');
+      } else {
+        setLocation('/home');
+      }
     }
   }, [user, setLocation]);
   const { isAuthenticated, isLoading } = useAuth();

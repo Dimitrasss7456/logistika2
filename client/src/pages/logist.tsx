@@ -20,7 +20,13 @@ export default function Logist() {
 
   useEffect(() => {
     if (user && user.role !== 'logist') {
-      setLocation(`/${user.role}`);
+      if (user.role === 'admin') {
+        setLocation('/admin');
+      } else if (user.role === 'client') {
+        setLocation('/client');
+      } else {
+        setLocation('/home');
+      }
     }
   }, [user, setLocation]);
   const { isAuthenticated, isLoading, user: authUser } = useAuth();
