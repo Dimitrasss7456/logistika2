@@ -153,7 +153,7 @@ export default function Login() {
                   type="text"
                   autoComplete="username"
                   {...form.register("login")}
-                  placeholder="Введите логин"
+                  placeholder="Введите логин (например: admin)"
                 />
                 {form.formState.errors.login && (
                   <p className="text-sm text-red-600 mt-1">
@@ -169,7 +169,7 @@ export default function Login() {
                   type="password"
                   autoComplete="current-password"
                   {...form.register("password")}
-                  placeholder="Ваш пароль"
+                  placeholder="Ваш пароль (например: 123456)"
                 />
                 {form.formState.errors.password && (
                   <p className="text-sm text-red-600 mt-1">
@@ -193,7 +193,7 @@ export default function Login() {
                   <div className="w-full border-t border-gray-300" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">Демо-доступ</span>
+                  <span className="px-2 bg-white text-gray-500">Быстрый вход</span>
                 </div>
               </div>
 
@@ -202,29 +202,33 @@ export default function Login() {
                   variant="outline"
                   onClick={() => handleDemoLogin("admin")}
                   className="w-full"
+                  disabled={isLoading}
                 >
-                  Войти как Администратор
+                  Войти как Администратор (admin/123456)
                 </Button>
                 <Button
                   variant="outline"
                   onClick={() => handleDemoLogin("manager")}
                   className="w-full"
+                  disabled={isLoading}
                 >
-                  Войти как Менеджер
+                  Войти как Менеджер (manager/123456)
                 </Button>
                 <Button
                   variant="outline"
                   onClick={() => handleDemoLogin("client")}
                   className="w-full"
+                  disabled={isLoading}
                 >
-                  Войти как Клиент
+                  Войти как Клиент (client/123456)
                 </Button>
                 <Button
                   variant="outline"
                   onClick={() => handleDemoLogin("logist")}
                   className="w-full"
+                  disabled={isLoading}
                 >
-                  Войти как Логист
+                  Войти как Логист (logist/123456)
                 </Button>
               </div>
             </div>
