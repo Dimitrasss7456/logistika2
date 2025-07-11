@@ -15,9 +15,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle, XCircle, Edit, UserCheck, UserX } from "lucide-react";
+import { useLocation } from "wouter";
+import { useEffect } from "react";
 
 export default function Admin() {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { user } = useAuth();
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (user && user.role !== 'admin') {
+      setLocation(`/${user.role}`);
+    }
+  }, [user, setLocation]);
+  const { isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -125,7 +135,7 @@ export default function Admin() {
   return (
     <div className="min-h-screen bg-neutral-bg">
       <Header />
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -355,7 +365,7 @@ function AdminPackageCard({
 function UserManagement() {
   const [selectedRole, setSelectedRole] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   const { data: users, isLoading: usersLoading } = useUsers(selectedRole === 'all' ? undefined : selectedRole);
   const { data: logists, isLoading: logistsLoading } = useLogists();
   const updateUserRole = useUpdateUserRole();

@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { usePackages } from "@/hooks/usePackages";
+import { useLocation } from "wouter";
+import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import Header from "@/components/layout/header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Package, Upload, CheckCircle } from "lucide-react";
-import { usePackages } from "@/hooks/usePackages";
 import { Package as PackageType } from "@/types";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -14,7 +16,15 @@ import { Button } from "@/components/ui/button";
 import FileUploadModal from "@/components/modals/file-upload-modal";
 
 export default function Logist() {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { user } = useAuth();
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (user && user.role !== 'logist') {
+      setLocation(`/${user.role}`);
+    }
+  }, [user, setLocation]);
+  const { isAuthenticated, isLoading, user: authUser } = useAuth();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -81,14 +91,14 @@ export default function Logist() {
     );
   }
 
-  if (!isAuthenticated || !user || user.role !== 'logist') {
+  if (!isAuthenticated || !authUser || authUser.role !== 'logist') {
     return null;
   }
 
   return (
     <div className="min-h-screen bg-neutral-bg">
       <Header />
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">

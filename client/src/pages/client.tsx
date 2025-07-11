@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { usePackages } from "@/hooks/usePackages";
+import { useLocation } from "wouter";
+import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import Header from "@/components/layout/header";
@@ -19,7 +22,15 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function Client() {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { user } = useAuth();
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (user && user.role !== 'client') {
+      setLocation(`/${user.role}`);
+    }
+  }, [user, setLocation]);
+  const { isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
   const [selectedLogist, setSelectedLogist] = useState<Logist | null>(null);
   const [createPackageOpen, setCreatePackageOpen] = useState(false);
@@ -133,7 +144,7 @@ export default function Client() {
   return (
     <div className="min-h-screen bg-neutral-bg">
       <Header />
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs defaultValue="logists" className="w-full">
           <TabsList className="grid w-full grid-cols-2">

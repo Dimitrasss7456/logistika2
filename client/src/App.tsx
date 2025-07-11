@@ -40,9 +40,9 @@ function Router() {
       ) : (
         <>
           <Route path="/" component={Home} />
-          {(user as any)?.role === 'admin' && <Route path="/admin" component={Admin} />}
-          {(user as any)?.role === 'logist' && <Route path="/logist" component={Logist} />}
-          {(user as any)?.role === 'client' && <Route path="/client" component={Client} />}
+          <Route path="/admin" component={Admin} />
+          <Route path="/logist" component={Logist} />
+          <Route path="/client" component={Client} />
         </>
       )}
       <Route component={NotFound} />
