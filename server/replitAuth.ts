@@ -119,16 +119,16 @@ export async function setupAuth(app: Express) {
   // Demo login endpoint for testing (POST)
   app.post("/api/login", async (req, res) => {
     try {
-      const { email, password } = req.body;
+      const { login, password } = req.body;
       
-      if (!email || !password) {
-        return res.status(400).json({ message: "Email и пароль обязательны" });
+      if (!login || !password) {
+        return res.status(400).json({ message: "Логин и пароль обязательны" });
       }
 
-      const user = await storage.validateCredentials(email, password);
+      const user = await storage.validateCredentials(login, password);
       
       if (!user) {
-        return res.status(401).json({ message: "Неверный email или пароль" });
+        return res.status(401).json({ message: "Неверный логин или пароль" });
       }
 
       // Store user in session

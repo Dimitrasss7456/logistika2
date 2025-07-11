@@ -11,7 +11,7 @@ import { Package } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
 const loginSchema = z.object({
-  email: z.string().min(1, "Email или логин обязателен"),
+  login: z.string().min(1, "Логин обязателен"),
   password: z.string().min(1, "Пароль обязателен"),
 });
 
@@ -25,7 +25,7 @@ export default function Login() {
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: "",
+      login: "",
       password: "",
     },
   });
@@ -77,23 +77,23 @@ export default function Login() {
 
   const handleDemoLogin = (role: "admin" | "manager" | "client" | "logist") => {
     const demoCredentials = {
-      admin: { email: "admin", password: "123456" },
-      manager: { email: "manager", password: "123456" },
-      client: { email: "client", password: "123456" },
-      logist: { email: "logist", password: "123456" },
+      admin: { login: "admin", password: "123456" },
+      manager: { login: "manager", password: "123456" },
+      client: { login: "client", password: "123456" },
+      logist: { login: "logist", password: "123456" },
     };
 
-    form.setValue("email", demoCredentials[role].email);
+    form.setValue("login", demoCredentials[role].login);
     form.setValue("password", demoCredentials[role].password);
     form.handleSubmit(onSubmit)();
   };
 
   const handlePasswordReset = async () => {
-    const email = form.getValues("email");
-    if (!email) {
+    const login = form.getValues("login");
+    if (!login) {
       toast({
         title: "Ошибка",
-        description: "Введите email для сброса пароля",
+        description: "Введите логин для сброса пароля",
         variant: "destructive",
       });
       return;
@@ -105,7 +105,7 @@ export default function Login() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ login }),
         credentials: "include",
       });
 
@@ -136,7 +136,7 @@ export default function Login() {
             Вход в систему
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            Войдите в свой аккаунт для управления посылками
+            Введите логин и пароль для входа в систему
           </p>
         </div>
 
@@ -147,16 +147,16 @@ export default function Login() {
           <CardContent>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div>
-                <Label htmlFor="email">Email или логин</Label>
+                <Label htmlFor="login">Логин</Label>
                 <Input
-                  id="email"
+                  id="login"
                   type="text"
-                  {...form.register("email")}
-                  placeholder="Введите email или логин"
+                  {...form.register("login")}
+                  placeholder="Введите логин"
                 />
-                {form.formState.errors.email && (
+                {form.formState.errors.login && (
                   <p className="text-sm text-red-600 mt-1">
-                    {form.formState.errors.email.message}
+                    {form.formState.errors.login.message}
                   </p>
                 )}
               </div>
@@ -233,7 +233,7 @@ export default function Login() {
                 onClick={handlePasswordReset}
                 className="text-primary hover:text-primary-dark text-sm"
               >
-                Сбросить пароль
+                Восстановить доступ
               </button>
               <p className="text-xs text-gray-500 mt-2">
                 Запрос будет отправлен администратору
