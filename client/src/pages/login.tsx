@@ -11,7 +11,7 @@ import { Package } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
 const loginSchema = z.object({
-  login: z.string().min(1, "Логин обязателен"),
+  login: z.string().min(1, "Логин обязателен").regex(/^[a-zA-Z0-9_-]+$/, "Логин может содержать только буквы, цифры, дефисы и подчеркивания"),
   password: z.string().min(1, "Пароль обязателен"),
 });
 
@@ -151,6 +151,7 @@ export default function Login() {
                 <Input
                   id="login"
                   type="text"
+                  autoComplete="username"
                   {...form.register("login")}
                   placeholder="Введите логин"
                 />
@@ -166,6 +167,7 @@ export default function Login() {
                 <Input
                   id="password"
                   type="password"
+                  autoComplete="current-password"
                   {...form.register("password")}
                   placeholder="Ваш пароль"
                 />
