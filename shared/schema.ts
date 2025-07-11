@@ -67,6 +67,7 @@ export const users = pgTable("users", {
   role: userRoleEnum("role").default("client").notNull(),
   isActive: boolean("is_active").default(true).notNull(),
   telegramUsername: varchar("telegram_username"),
+  passwordHash: varchar("password_hash"), // For demo login functionality
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

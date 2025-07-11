@@ -3,10 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Package, Users, Shield, Bell } from "lucide-react";
+import { Package, Users, Shield, Bell, UserPlus, LogIn } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { Link } from "wouter";
 
 export default function Landing() {
   const [email, setEmail] = useState("");
@@ -209,14 +210,55 @@ export default function Landing() {
             Готовы начать?
           </h2>
           <p className="text-gray-600 mb-6">
-            Войдите в систему, чтобы получить доступ к вашей панели управления
+            Войдите в систему или создайте аккаунт для доступа к панели управления
           </p>
-          <Button 
-            onClick={() => window.scrollTo({ top: 60, behavior: 'smooth' })}
-            className="bg-primary hover:bg-primary-dark text-white px-8 py-3"
-          >
-            Войти в систему
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/login">
+              <Button className="bg-primary hover:bg-primary-dark text-white px-8 py-3 flex items-center gap-2">
+                <LogIn className="h-5 w-5" />
+                Войти в систему
+              </Button>
+            </Link>
+            <Link href="/register">
+              <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-white px-8 py-3 flex items-center gap-2">
+                <UserPlus className="h-5 w-5" />
+                Создать аккаунт
+              </Button>
+            </Link>
+          </div>
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-500 mb-4">Или используйте демо-доступ:</p>
+            <div className="flex flex-wrap gap-2 justify-center">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => { setEmail("admin@package.ru"); setPassword("123456"); }}
+              >
+                Администратор
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => { setEmail("client@package.ru"); setPassword("123456"); }}
+              >
+                Клиент
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => { setEmail("logist@package.ru"); setPassword("123456"); }}
+              >
+                Логист
+              </Button>
+            </div>
+            <div className="mt-4 text-center">
+              <Link href="/faq">
+                <Button variant="link" className="text-sm text-gray-600 hover:text-primary">
+                  Часто задаваемые вопросы
+                </Button>
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </div>

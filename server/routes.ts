@@ -413,6 +413,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Registration and login for demo accounts
+  app.post('/api/auth/register', async (req, res) => {
+    try {
+      const { email, password, firstName, lastName, role, telegramUsername, location, address, supportsLockers, supportsOffices } = req.body;
+
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ message: "Пользователь с таким email уже существует" });
+      }
+
+      // Create user
+      const user = await storage.createUser({
+        id: Date.now().toString(), // Simple ID generation for demo
+        email,
+        firstName,
+        lastName,
+        role,
+        telegramUsername,
+        isActive: true,
+        passwordHash: password, // In production, hash this properly
+      });
+
+      // Create logist profile if role is logist
+      if (role === 'logist') {
+        await storage.createLogist({
+          userId: user.id,
+          location,
+          address,
+          supportsLockers: supportsLockers || false,
+          supportsOffices: supportsOffices || false,
+          isActive: true,
+        });
+      }
+
+      res.json({ message: "Регистрация успешна", user: { id: user.id, email: user.email, role: user.role } });
+    } catch (error) {
+      console.error("Registration error:", error);
+      res.status(500).json({ message: "Ошибка регистрации" });
+    }
+  });
+
+  app.post('/api/auth/login', async (req, res) => {
+    try {
+      const { email, password } = req.body;
+
+      const user = await storage.validateCredentials(email, password);
+      if (!user) {
+        return res.status(401).json({ message: "Неверный email или пароль" });
+      }
+
+      // Set up session (simplified for demo)
+      req.session.userId = user.id;
+      req.session.user = user;
+
+      res.json({ message: "Вход выполнен", user: { id: user.id, email: user.email, role: user.role } });
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ message: "Ошибка входа" });
+    }
+  });
+
+  app.post('/api/auth/logout', (req, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).json({ message: "Ошибка выхода" });
+      }
+      res.json({ message: "Выход выполнен" });
+    });
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
