@@ -61,20 +61,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Доступ запрещен" });
       }
 
-      const { firstName, lastName, email, role, telegramUsername } = req.body;
+      const { firstName, lastName, email, role, telegramUsername, login, password } = req.body;
       
-      // Generate login and password - use standard password for all users
-      const login = `${role}_${Date.now()}`;
-      const password = "123456"; // Standard password for all users
+      // Use provided login and password
+      const finalLogin = login || `${role}_${Date.now()}`;
+      const finalPassword = password || "123456";
       
       const newUser = await storage.createUser({
         id: `${role}-${Date.now()}`,
-        email: email || `${login}@generated.local`,
+        email: email || `${finalLogin}@generated.local`,
+        login: finalLogin,
         firstName,
         lastName,
         telegramUsername,
         role,
-        passwordHash: password,
+        passwordHash: finalPassword,
         isActive: true,
       });
 
@@ -92,7 +93,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ 
         user: newUser, 
-        credentials: { login, password },
+        credentials: { login: finalLogin, password: finalPassword },
         message: "Пользователь создан успешно" 
       });
     } catch (error) {

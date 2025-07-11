@@ -105,19 +105,19 @@ export class DatabaseStorage implements IStorage {
   async validateCredentials(emailOrLogin: string, password: string): Promise<User | null> {
     console.log('validateCredentials called with:', emailOrLogin, password);
 
-    // Try to find user by email first
+    // Try to find user by login first
     let user = await db
       .select()
       .from(users)
-      .where(eq(users.email, emailOrLogin))
+      .where(eq(users.login, emailOrLogin))
       .limit(1);
 
-    // If not found by email, try to find by generated login pattern
+    // If not found by login, try to find by email
     if (user.length === 0) {
       user = await db
         .select()
         .from(users)
-        .where(like(users.email, `${emailOrLogin}@generated.local`))
+        .where(eq(users.email, emailOrLogin))
         .limit(1);
     }
 

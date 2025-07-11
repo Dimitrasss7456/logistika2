@@ -57,6 +57,8 @@ export default function Login() {
       // Redirect based on role
       if (result.user.role === "admin") {
         navigate("/admin");
+      } else if (result.user.role === "manager") {
+        navigate("/manager");
       } else if (result.user.role === "logist") {
         navigate("/logist");
       } else {
@@ -73,11 +75,12 @@ export default function Login() {
     }
   };
 
-  const handleDemoLogin = (role: "admin" | "client" | "logist") => {
+  const handleDemoLogin = (role: "admin" | "manager" | "client" | "logist") => {
     const demoCredentials = {
-      admin: { email: "admin@package.ru", password: "123456" },
-      client: { email: "client@package.ru", password: "123456" },
-      logist: { email: "logist@package.ru", password: "123456" },
+      admin: { email: "admin", password: "123456" },
+      manager: { email: "manager", password: "123456" },
+      client: { email: "client", password: "123456" },
+      logist: { email: "logist", password: "123456" },
     };
 
     form.setValue("email", demoCredentials[role].email);
@@ -144,10 +147,10 @@ export default function Login() {
           <CardContent>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div>
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">Email или логин</Label>
                 <Input
                   id="email"
-                  type="email"
+                  type="text"
                   {...form.register("email")}
                   placeholder="Введите email или логин"
                 />
@@ -199,6 +202,13 @@ export default function Login() {
                   className="w-full"
                 >
                   Войти как Администратор
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => handleDemoLogin("manager")}
+                  className="w-full"
+                >
+                  Войти как Менеджер
                 </Button>
                 <Button
                   variant="outline"

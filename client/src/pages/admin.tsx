@@ -531,6 +531,16 @@ function UserManagement() {
                         <Input id="lastName" name="lastName" required />
                       </div>
                     </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="login">Логин</Label>
+                        <Input id="login" name="login" required placeholder="Введите логин" />
+                      </div>
+                      <div>
+                        <Label htmlFor="password">Пароль</Label>
+                        <Input id="password" name="password" type="password" required placeholder="Введите пароль" />
+                      </div>
+                    </div>
                     <div>
                       <Label htmlFor="email">Email (опционально)</Label>
                       <Input id="email" name="email" type="email" placeholder="Если не указан, будет сгенерирован" />
@@ -547,6 +557,7 @@ function UserManagement() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="client">Клиент</SelectItem>
+                          <SelectItem value="manager">Менеджер</SelectItem>
                           <SelectItem value="logist">Логист</SelectItem>
                           <SelectItem value="admin">Администратор</SelectItem>
                         </SelectContent>
