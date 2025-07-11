@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { usePackages } from "@/hooks/usePackages";
 import { useLocation } from "wouter";
-import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import Header from "@/components/layout/header";
