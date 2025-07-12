@@ -63,11 +63,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { firstName, lastName, email, role, telegramUsername, login, password } = req.body;
 
+      console.log('Creating user with data:', { firstName, lastName, email, role, telegramUsername, login, password });
+
       // Use provided login and password
       const finalLogin = login || `${role}_${Date.now()}`;
       const finalPassword = password || "123456";
 
-      const newUser = await storage.createUser({
+      console.log('Final credentials:', { finalLogin, finalPassword });
+
+      const userData = {
         id: `${role}-${Date.now()}`,
         email: email || `${finalLogin}@generated.local`,
         login: finalLogin,
@@ -77,7 +81,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         role,
         passwordHash: finalPassword,
         isActive: true,
-      });
+      };
+
+      console.log('User data to create:', userData);
+
+      const newUser = await storage.createUser(userData);
 
       // If creating a logist, also create logist record
       if (role === 'logist') {
