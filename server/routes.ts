@@ -67,6 +67,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const finalLogin = login || `${role}_${Date.now()}`;
       const finalPassword = password || "123456";
 
+      // Hash the password before saving
+      const bcrypt = require('bcryptjs');
+      const hashedPassword = await bcrypt.hash(finalPassword, 10);
+
       const newUser = await storage.createUser({
         id: `${role}-${Date.now()}`,
         email: email || `${finalLogin}@generated.local`,
@@ -75,7 +79,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         lastName,
         telegramUsername,
         role,
-        passwordHash: finalPassword,
+        passwordHash: hashedPassword,
         isActive: true,
       });
 
