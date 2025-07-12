@@ -32,7 +32,7 @@ export default function Manager() {
   const { isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [selectedPackageId, setSelectedPackageId] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState("packages");
   
@@ -123,7 +123,7 @@ export default function Manager() {
       pkg.client?.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       pkg.client?.lastName.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesStatus = !statusFilter || pkg.status === statusFilter;
+    const matchesStatus = !statusFilter || statusFilter === "all" || pkg.status === statusFilter;
     
     return matchesSearch && matchesStatus;
   }) || [];
@@ -188,8 +188,9 @@ export default function Manager() {
                         <SelectValue placeholder="Все статусы" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Все статусы</SelectItem>
+                        <SelectItem value="all">Все статусы</SelectItem>
                         <SelectItem value="created">Создана</SelectItem>
+                        <SelectItem value="created_client">Создана клиентом</SelectItem>
                         <SelectItem value="sent_to_logist">Передана логисту</SelectItem>
                         <SelectItem value="received_by_logist">Получена логистом</SelectItem>
                         <SelectItem value="logist_confirmed">Логист подтвердил</SelectItem>
@@ -343,6 +344,7 @@ function ManagerPackageCard({ package: pkg, onStatusUpdate, onEdit }: {
   const getStatusColor = (status: string) => {
     const colorMap: { [key: string]: string } = {
       created: "bg-blue-100 text-blue-800 border-blue-200",
+      created_client: "bg-blue-100 text-blue-800 border-blue-200",
       sent_to_logist: "bg-yellow-100 text-yellow-800 border-yellow-200",
       received_by_logist: "bg-purple-100 text-purple-800 border-purple-200",
       logist_confirmed: "bg-green-100 text-green-800 border-green-200",
@@ -360,6 +362,7 @@ function ManagerPackageCard({ package: pkg, onStatusUpdate, onEdit }: {
   const getStatusText = (status: string) => {
     const statusMap: { [key: string]: string } = {
       created: "Создана",
+      created_client: "Создана клиентом",
       sent_to_logist: "Передана логисту",
       received_by_logist: "Получена логистом",
       logist_confirmed: "Логист подтвердил получение",
@@ -377,6 +380,7 @@ function ManagerPackageCard({ package: pkg, onStatusUpdate, onEdit }: {
   const getRequiredAction = (status: string) => {
     switch (status) {
       case "created":
+      case "created_client":
         return { text: "Проверить информацию от клиента и отправить логисту", nextStatus: "sent_to_logist", color: "text-blue-600" };
       case "logist_confirmed":
         return { text: "Проверить данные от логиста и отправить информацию клиенту", nextStatus: "info_sent_to_client", color: "text-green-600" };
