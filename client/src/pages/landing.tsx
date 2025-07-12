@@ -10,13 +10,13 @@ import { apiRequest } from "@/lib/queryClient";
 import { Link } from "wouter";
 
 export default function Landing() {
-  const [email, setEmail] = useState("");
+  const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
   const { toast } = useToast();
 
   const loginMutation = useMutation({
-    mutationFn: async ({ email, password }: { email: string; password: string }) => {
-      return await apiRequest('POST', '/api/login', { email, password });
+    mutationFn: async ({ login, password }: { login: string; password: string }) => {
+      return await apiRequest('POST', '/api/login', { login, password });
     },
     onSuccess: () => {
       toast({
@@ -36,7 +36,7 @@ export default function Landing() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
+    if (!login || !password) {
       toast({
         title: "Ошибка",
         description: "Пожалуйста, заполните все поля",
@@ -44,7 +44,7 @@ export default function Landing() {
       });
       return;
     }
-    loginMutation.mutate({ email, password });
+    loginMutation.mutate({ login, password });
   };
 
   return (
@@ -66,13 +66,13 @@ export default function Landing() {
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="login">Логин</Label>
                     <Input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="example@package.ru"
+                      id="login"
+                      type="text"
+                      value={login}
+                      onChange={(e) => setLogin(e.target.value)}
+                      placeholder="Введите логин"
                       required
                     />
                   </div>
@@ -103,15 +103,15 @@ export default function Landing() {
               <div className="space-y-2 text-xs text-gray-600">
                 <div className="flex justify-between">
                   <span>Администратор:</span>
-                  <span>admin@package.ru / 123456</span>
+                  <span>admin / 123456</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Клиент:</span>
-                  <span>client@package.ru / 123456</span>
+                  <span>client / 123456</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Логист:</span>
-                  <span>logist@package.ru / 123456</span>
+                  <span>logist / 123456</span>
                 </div>
               </div>
             </div>
@@ -229,21 +229,21 @@ export default function Landing() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => { setEmail("admin@package.ru"); setPassword("123456"); }}
+                onClick={() => { setLogin("admin"); setPassword("123456"); }}
               >
                 Администратор
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => { setEmail("client@package.ru"); setPassword("123456"); }}
+                onClick={() => { setLogin("client"); setPassword("123456"); }}
               >
                 Клиент
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => { setEmail("logist@package.ru"); setPassword("123456"); }}
+                onClick={() => { setLogin("logist"); setPassword("123456"); }}
               >
                 Логист
               </Button>
