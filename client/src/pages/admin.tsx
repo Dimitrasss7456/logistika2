@@ -426,12 +426,15 @@ function UserManagement() {
       lastName: formData.get('lastName'),
       email: formData.get('email'),
       telegramUsername: formData.get('telegramUsername'),
+      login: formData.get('login'),
+      password: formData.get('password'),
       role: formData.get('role'),
       location: formData.get('location'),
       address: formData.get('address'),
       supportsLockers: formData.get('supportsLockers') === 'on',
       supportsOffices: formData.get('supportsOffices') === 'on',
     };
+    console.log('Submitting user data:', userData);
     createUser.mutate(userData);
   };
 
