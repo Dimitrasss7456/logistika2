@@ -107,3 +107,66 @@ export function getStatusColor(status: PackageStatus): string {
       return "bg-gray-100 text-gray-800";
   }
 }
+
+export const getNextStatuses = (currentStatus: string): { value: string; label: string }[] => {
+  const statusFlow = {
+    created_client: [
+      { value: 'confirmed_manager', label: 'Подтверждено менеджером' },
+      { value: 'cancelled', label: 'Отменено' }
+    ],
+    confirmed_manager: [
+      { value: 'accepted_by_logist', label: 'Принято логистом' },
+      { value: 'cancelled', label: 'Отменено' }
+    ],
+    accepted_by_logist: [
+      { value: 'in_transit', label: 'В пути' },
+      { value: 'cancelled', label: 'Отменено' }
+    ],
+    in_transit: [
+      { value: 'out_for_delivery', label: 'На доставке' },
+      { value: 'cancelled', label: 'Отменено' }
+    ],
+    out_for_delivery: [
+      { value: 'delivered', label: 'Доставлено' },
+      { value: 'failed_delivery', label: 'Неудачная доставка' }
+    ],
+    failed_delivery: [
+      { value: 'out_for_delivery', label: 'Повторная доставка' },
+      { value: 'cancelled', label: 'Отменено' }
+    ],
+    delivered: [],
+    cancelled: []
+  };
+
+  return statusFlow[currentStatus] || [];
+};
+
+export const getStatusLabel = (status: string): string => {
+  const labels = {
+    created_client: 'Создано клиентом',
+    confirmed_manager: 'Подтверждено менеджером',
+    accepted_by_logist: 'Принято логистом',
+    in_transit: 'В пути',
+    out_for_delivery: 'На доставке',
+    delivered: 'Доставлено',
+    failed_delivery: 'Неудачная доставка',
+    cancelled: 'Отменено'
+  };
+
+  return labels[status] || status;
+};
+
+export const getStatusColor = (status: string): string => {
+  const colors = {
+    created_client: 'bg-blue-100 text-blue-800',
+    confirmed_manager: 'bg-yellow-100 text-yellow-800',
+    accepted_by_logist: 'bg-purple-100 text-purple-800',
+    in_transit: 'bg-orange-100 text-orange-800',
+    out_for_delivery: 'bg-indigo-100 text-indigo-800',
+    delivered: 'bg-green-100 text-green-800',
+    failed_delivery: 'bg-red-100 text-red-800',
+    cancelled: 'bg-gray-100 text-gray-800'
+  };
+
+  return colors[status] || 'bg-gray-100 text-gray-800';
+};

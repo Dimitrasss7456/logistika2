@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { usePackages, useUpdatePackageStatus } from "@/hooks/usePackages";
@@ -22,22 +21,22 @@ import { Package as PackageType, User as UserType } from "@/types";
 export default function Manager() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
-  
+
   useEffect(() => {
     if (user && user.role !== 'manager') {
       setLocation(`/${user.role}`);
     }
   }, [user, setLocation]);
-  
+
   const { isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedPackageId, setSelectedPackageId] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState("packages");
-  
+
   const updatePackageStatus = useUpdatePackageStatus();
-  
+
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -76,7 +75,7 @@ export default function Manager() {
 
   const handleStatusUpdate = (id: number, newStatus: string, adminComments?: string) => {
     console.log('Handling status update:', { id, newStatus, adminComments });
-    
+
     updatePackageStatus.mutate({
       id,
       status: newStatus,
@@ -125,9 +124,9 @@ export default function Manager() {
       pkg.recipientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       pkg.client?.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       pkg.client?.lastName.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesStatus = !statusFilter || statusFilter === "all" || pkg.status === statusFilter;
-    
+
     return matchesSearch && matchesStatus;
   }) || [];
 
