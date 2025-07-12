@@ -415,14 +415,24 @@ function UserManagement() {
   const createUserMutation = useMutation({
     mutationFn: async (userData: any) => {
       console.log('Отправляем данные пользователя:', userData);
-      const response = await apiRequest("POST", "/api/users", userData);
-      console.log('Ответ сервера:', response);
-      return response;
+      try {
+        const response = await apiRequest("POST", "/api/users", userData);
+        console.log('Ответ сервера:', response);
+        return response;
+      } catch (error) {
+        console.error('Ошибка API запроса:', error);
+        throw error;
+      }
     },
     onSuccess: (data) => {
       console.log('Пользователь успешно создан:', data);
       queryClient.invalidateQueries({ queryKey: ["users"] });
-      setGeneratedCredentials(data.credentials);
+      queryClient.invalidateQueries({ queryKey: ["logists"] });
+      
+      if (data && data.credentials) {
+        setGeneratedCredentials(data.credentials);
+      }
+      
       // Сбрасываем форму
       setNewUserData({
         firstName: '',
@@ -437,9 +447,10 @@ function UserManagement() {
         supportsLockers: false,
         supportsOffices: false,
       });
+      
       toast({
         title: "Пользователь создан",
-        description: `Пользователь с логином ${data.credentials.login} успешно создан`,
+        description: data?.credentials ? `Пользователь с логином ${data.credentials.login} успешно создан` : "Пользователь успешно создан",
       });
     },
     onError: (error) => {

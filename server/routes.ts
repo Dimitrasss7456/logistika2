@@ -55,15 +55,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post('/api/users', isAuthenticated, async (req: any, res) => {
+    console.log('=== POST /api/users запрос получен ===');
+    console.log('Request body:', req.body);
+    console.log('Current user:', req.user);
+    
     try {
       const currentUser = req.user;
       if (currentUser?.role !== 'admin' && currentUser?.role !== 'manager') {
+        console.log('Доступ запрещен для пользователя:', currentUser?.role);
         return res.status(403).json({ message: "Доступ запрещен" });
       }
 
-      const { firstName, lastName, email, role, telegramUsername, login, password } = req.body;
+      const { firstName, lastName, email, role, telegramUsername, login, password, location, address, supportsLockers, supportsOffices } = req.body;
 
-      console.log('Creating user with data:', { firstName, lastName, email, role, telegramUsername, login, password });
+      console.log('Creating user with data:', { firstName, lastName, email, role, telegramUsername, login, password, location, address, supportsLockers, supportsOffices });
 
       // Use provided login and password
       const finalLogin = login || `${role}_${Date.now()}`;
