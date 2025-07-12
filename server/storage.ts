@@ -277,27 +277,40 @@ export class DatabaseStorage implements IStorage {
     // Note: Single package created, no duplicate manager package needed
 
     // Create notifications for manager and logist
-    const managerUsers = await this.getUsersByRole('manager');
-    for (const manager of managerUsers) {
-      await this.createNotification({
-        userId: manager.id,
-        title: 'Новая посылка от клиента',
-        message: `Клиент создал новую посылку ${uniqueNumber}`,
-        type: 'package_status',
-        packageId: newPackage.id
-      });
-    }
+    try {
+      const managerUsers = await this.getUsersByRole('manager');
+      console.log('Found manager users:', managerUsers);
+      for (const manager of managerUsers) {
+        if (manager && manager.id) {
+          console.log('Creating notification for manager:', manager.id);
+          await this.createNotification({
+            userId: manager.id,
+            title: 'Новая посылка от клиента',
+            message: `Клиент создал новую посылку ${uniqueNumber}`,
+            type: 'package_status',
+            packageId: newPackage.id
+          });
+        }
+      }
 
-    // Create admin notification
-    const adminUsers = await this.getUsersByRole('admin');
-    for (const admin of adminUsers) {
-      await this.createNotification({
-        userId: admin.id,
-        title: 'Новая посылка создана',
-        message: `Клиент создал новую посылку ${uniqueNumber}`,
-        type: 'package_status',
-        packageId: newPackage.id
-      });
+      // Create admin notification
+      const adminUsers = await this.getUsersByRole('admin');
+      console.log('Found admin users:', adminUsers);
+      for (const admin of adminUsers) {
+        if (admin && admin.id) {
+          console.log('Creating notification for admin:', admin.id);
+          await this.createNotification({
+            userId: admin.id,
+            title: 'Новая посылка создана',
+            message: `Клиент создал новую посылку ${uniqueNumber}`,
+            type: 'package_status',
+            packageId: newPackage.id
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error creating notifications:', error);
+      // Continue without failing - notifications are not critical
     }
 
     return newPackage;

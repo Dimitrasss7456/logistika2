@@ -295,13 +295,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const createdPackage = await storage.createPackage(packageData);
 
       // Create notification for admin
-      await storage.createNotification({
-        userId: 'admin-demo', // Admin user ID
-        title: 'Новая посылка',
-        message: `Создана новая посылка #${createdPackage.uniqueNumber}`,
-        type: 'package_status',
-        packageId: createdPackage.id,
-      });
+      // Notification is already created in storage.createPackage method
+      // No need to create duplicate notification here
 
       res.json(createdPackage);
     } catch (error) {
