@@ -194,8 +194,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Manager and admin see all packages (no filtering)
 
       // Additional filters from query params
-      if (req.query.status) filters.status = req.query.status;
-      if (req.query.search) filters.search = req.query.search;
+      if (req.query.status && req.query.status !== 'all') filters.status = req.query.status;
+      if (req.query.search && req.query.search.trim() !== '') filters.search = req.query.search;
 
       const packages = await storage.getPackages(filters);
       res.json(packages);

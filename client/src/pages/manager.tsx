@@ -55,7 +55,7 @@ export default function Manager() {
   // Fetch packages without status filtering - let manager see all packages
   const { data: packages, isLoading: packagesLoading, error: packagesError, refetch: refetchPackages } = usePackages({
     search: searchTerm || undefined,
-    // Don't pass status filter to API - filter locally instead
+    status: undefined, // Explicitly pass undefined to avoid filtering
   });
 
   const { data: users, isLoading: usersLoading } = useUsers();

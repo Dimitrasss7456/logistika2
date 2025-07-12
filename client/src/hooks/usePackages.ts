@@ -2,43 +2,38 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Package, PackageStatus } from "@/types";
 
-export function usePackages(filters?: {
-  status?: string;
-  search?: string;
-}) {
+export function usePackages(filters?: { status?: string; search?: string; limit?: number }) {
   const queryKey = ['/api/packages'];
-  
-  if (filters) {
-    const params = new URLSearchParams();
-    if (filters.status) params.set('status', filters.status);
-    if (filters.search) params.set('search', filters.search);
-    queryKey.push(params.toString());
+
+  // Build query string - only add parameters if they have meaningful values
+  const params = new URLSearchParams();
+  if (filters?.status && filters.status !== 'all' && filters.status !== undefined) {
+    params.append('status', filters.status);
+  }
+  if (filters?.search && filters.search.trim() !== '') {
+    params.append('search', filters.search);
+  }
+  if (filters?.limit && filters.limit > 0) {
+    params.append('limit', filters.limit.toString());
   }
 
-  return useQuery<Package[]>({
-    queryKey,
+  const queryString = params.toString();
+  const url = queryString ? `/api/packages?${queryString}` : '/api/packages';
+
+  return useQuery({
+    queryKey: [...queryKey, filters],
     queryFn: async () => {
-      // Build URL with filters, but only include non-empty values and exclude 'all'
-      const validFilters: Record<string, string> = {};
-      if (filters?.status && filters.status !== 'all') validFilters.status = filters.status;
-      if (filters?.search) validFilters.search = filters.search;
-      
-      const url = Object.keys(validFilters).length > 0 
-        ? `/api/packages?${new URLSearchParams(validFilters).toString()}`
-        : '/api/packages';
-      
       console.log('Fetching packages from:', url);
-      const response = await fetch(url, { credentials: 'include' });
+      const response = await fetch(url, {
+        credentials: 'include',
+      });
       if (!response.ok) {
-        console.error('Failed to fetch packages:', response.status, response.statusText);
-        throw new Error(`Failed to fetch packages: ${response.status}`);
+        throw new Error('Failed to fetch packages');
       }
       const data = await response.json();
       console.log('Received packages:', data);
       return data;
     },
-    staleTime: 30000, // Consider data stale after 30 seconds
-    refetchInterval: 60000, // Refetch every minute
   });
 }
 
@@ -80,12 +75,12 @@ export function useCreatePackage() {
         credentials: 'include',
         body: JSON.stringify(packageData),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || `HTTP ${response.status}`);
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
