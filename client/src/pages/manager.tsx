@@ -4,7 +4,6 @@ import { usePackages, useUpdatePackageStatus } from "@/hooks/usePackages";
 import { useToast } from "@/hooks/use-toast";
 import { useUsers, useUpdateUserRole, useToggleUserAccess } from "@/hooks/useUsers";
 import { useLocation } from "wouter";
-import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import Header from "@/components/layout/header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

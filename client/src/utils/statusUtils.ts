@@ -1,7 +1,5 @@
 import { PackageStatus } from "@/types";
-```
 
-```typescript
 // Статусы для каждой роли согласно ТЗ
 export const CLIENT_STATUSES = {
   created: "Создана",
