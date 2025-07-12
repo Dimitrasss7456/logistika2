@@ -75,6 +75,8 @@ export default function Manager() {
   }, [packagesError, toast]);
 
   const handleStatusUpdate = (id: number, newStatus: string, adminComments?: string) => {
+    console.log('Handling status update:', { id, newStatus, adminComments });
+    
     updatePackageStatus.mutate({
       id,
       status: newStatus,
@@ -88,10 +90,11 @@ export default function Manager() {
         // Force refresh packages
         refetchPackages();
       },
-      onError: () => {
+      onError: (error) => {
+        console.error('Error updating package status:', error);
         toast({
           title: "Ошибка",
-          description: "Не удалось обновить статус",
+          description: error.message || "Не удалось обновить статус",
           variant: "destructive",
         });
       }

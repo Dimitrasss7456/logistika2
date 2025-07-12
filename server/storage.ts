@@ -297,19 +297,28 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updatePackageStatus(id: number, status: string, adminComments?: string): Promise<Package> {
+    console.log('Storage: updating package status', { id, status, adminComments });
+
+    const updateData: any = { 
+      status,
+      updatedAt: new Date()
+    };
+
+    if (adminComments !== undefined) {
+      updateData.adminComments = adminComments;
+    }
+
     const [updatedPackage] = await db
       .update(packages)
-      .set({ 
-        status: status as any, 
-        adminComments, 
-        updatedAt: new Date() 
-      })
+      .set(updateData)
       .where(eq(packages.id, id))
       .returning();
 
-    // Create notifications based on status change
-    await this.createStatusChangeNotifications(updatedPackage, status);
+    if (!updatedPackage) {
+      throw new Error('Посылка не найдена');
+    }
 
+    console.log('Storage: package status updated successfully', updatedPackage);
     return updatedPackage;
   }
 

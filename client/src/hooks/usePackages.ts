@@ -92,25 +92,45 @@ export function useCreatePackage() {
 
 export function useUpdatePackageStatus() {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async ({
-      id,
-      status,
-      adminComments,
-    }: {
-      id: number;
-      status: PackageStatus;
-      adminComments?: string;
-    }) => {
-      const response = await apiRequest('PATCH', `/api/packages/${id}/status`, {
-        status,
-        adminComments,
+    mutationFn: async ({ id, status, adminComments }: { id: number; status: string; adminComments?: string }) => {
+      console.log('Updating package status:', { id, status, adminComments });
+
+      const response = await fetch(`/api/packages/${id}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ status, adminComments }),
       });
-      return response.json();
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Неизвестная ошибка' }));
+        console.error('Error updating package status:', errorData);
+        throw new Error(errorData.message || `HTTP ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log('Package status updated successfully:', result);
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/packages'] });
+      toast({
+        title: 'Успех',
+        description: 'Статус посылки обновлен',
+      });
+    },
+    onError: (error) => {
+      console.error('Mutation error:', error);
+      toast({
+        title: 'Ошибка',
+        description: error.message || 'Не удалось обновить статус',
+        variant: 'destructive',
+      });
     },
   });
 }

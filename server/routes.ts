@@ -303,9 +303,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const packageId = parseInt(req.params.id);
       const { status, adminComments } = req.body;
 
+      console.log('Updating package status:', { packageId, status, adminComments });
+
       const currentUser = req.user;
       if (currentUser?.role !== 'admin' && currentUser?.role !== 'manager') {
         return res.status(403).json({ message: "Доступ запрещен" });
+      }
+
+      if (!status) {
+        return res.status(400).json({ message: "Статус обязателен" });
       }
 
       const updatedPackage = await storage.updatePackageStatus(packageId, status, adminComments);
@@ -316,16 +322,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.createNotification({
           userId: packageData.clientId,
           title: 'Изменение статуса',
-          message: `Посылка #${packageData.uniqueNumber} изменила статус`,
+          message: `Посылка #${packageData.uniqueNumber} изменила статус на "${status}"`,
           type: 'package_status',
           packageId: packageId,
         });
       }
 
+      console.log('Package status updated successfully:', updatedPackage);
       res.json(updatedPackage);
     } catch (error) {
       console.error("Error updating package status:", error);
-      res.status(500).json({ message: "Ошибка обновления статуса посылки" });
+      res.status(500).json({ message: "Ошибка обновления статуса посылки", error: error.message });
     }
   });
 
