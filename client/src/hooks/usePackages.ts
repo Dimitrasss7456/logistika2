@@ -18,13 +18,27 @@ export function usePackages(filters?: {
   return useQuery<Package[]>({
     queryKey,
     queryFn: async () => {
-      const url = filters 
-        ? `/api/packages?${new URLSearchParams(filters).toString()}`
+      // Build URL with filters, but only include non-empty values
+      const validFilters: Record<string, string> = {};
+      if (filters?.status) validFilters.status = filters.status;
+      if (filters?.search) validFilters.search = filters.search;
+      
+      const url = Object.keys(validFilters).length > 0 
+        ? `/api/packages?${new URLSearchParams(validFilters).toString()}`
         : '/api/packages';
+      
+      console.log('Fetching packages from:', url);
       const response = await fetch(url, { credentials: 'include' });
-      if (!response.ok) throw new Error('Failed to fetch packages');
-      return response.json();
+      if (!response.ok) {
+        console.error('Failed to fetch packages:', response.status, response.statusText);
+        throw new Error(`Failed to fetch packages: ${response.status}`);
+      }
+      const data = await response.json();
+      console.log('Received packages:', data);
+      return data;
     },
+    staleTime: 30000, // Consider data stale after 30 seconds
+    refetchInterval: 60000, // Refetch every minute
   });
 }
 

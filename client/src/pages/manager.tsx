@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Package, User, Settings, Shield, Bell, FileText, Send, Edit, UserPlus, MessageSquare, CheckCircle, DollarSign, Upload, Eye, Truck, Clock, AlertTriangle } from "lucide-react";
+import { Package, User, Settings, Shield, Bell, FileText, Send, Edit, UserPlus, MessageSquare, CheckCircle, DollarSign, Upload, Eye, Truck, Clock, AlertTriangle, RefreshCw } from "lucide-react";
 import { Package as PackageType, User as UserType } from "@/types";
 
 export default function Manager() {
@@ -32,7 +32,7 @@ export default function Manager() {
   const { isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("");
   const [selectedPackageId, setSelectedPackageId] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState("packages");
   
@@ -52,9 +52,10 @@ export default function Manager() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  const { data: packages, isLoading: packagesLoading, error: packagesError } = usePackages({
-    search: searchTerm,
-    status: statusFilter === "all" ? undefined : statusFilter || undefined,
+  // Fetch packages without any pre-filtering - let manager see all packages
+  const { data: packages, isLoading: packagesLoading, error: packagesError, refetch: refetchPackages } = usePackages({
+    search: searchTerm || undefined,
+    status: statusFilter || undefined,
   });
 
   const { data: users, isLoading: usersLoading } = useUsers();
@@ -84,6 +85,8 @@ export default function Manager() {
           title: "Статус обновлен",
           description: "Статус посылки успешно изменен",
         });
+        // Force refresh packages
+        refetchPackages();
       },
       onError: () => {
         toast({
@@ -95,6 +98,14 @@ export default function Manager() {
     });
   };
 
+  const handleRefresh = () => {
+    refetchPackages();
+    toast({
+      title: "Обновление",
+      description: "Список посылок обновлен",
+    });
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -103,24 +114,46 @@ export default function Manager() {
     );
   }
 
+  // Filter packages after fetching
+  const filteredPackages = packages?.filter((pkg: PackageType) => {
+    const matchesSearch = !searchTerm || 
+      pkg.uniqueNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      pkg.itemName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      pkg.recipientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      pkg.client?.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      pkg.client?.lastName.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = !statusFilter || pkg.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  }) || [];
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Панель менеджера
-          </h1>
-          <p className="text-gray-600">
-            Управление посылками, пользователями и уведомлениями
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                Панель менеджера
+              </h1>
+              <p className="text-gray-600">
+                Управление посылками, пользователями и уведомлениями
+              </p>
+            </div>
+            <Button onClick={handleRefresh} variant="outline">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Обновить
+            </Button>
+          </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="packages">
               <Package className="h-4 w-4 mr-2" />
-              Посылки
+              Посылки ({filteredPackages.length})
             </TabsTrigger>
             <TabsTrigger value="users">
               <User className="h-4 w-4 mr-2" />
@@ -152,10 +185,10 @@ export default function Manager() {
                     </div>
                     <Select value={statusFilter} onValueChange={setStatusFilter}>
                       <SelectTrigger className="w-[200px]">
-                        <SelectValue placeholder="Фильтр по статусу" />
+                        <SelectValue placeholder="Все статусы" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">Все статусы</SelectItem>
+                        <SelectItem value="">Все статусы</SelectItem>
                         <SelectItem value="created">Создана</SelectItem>
                         <SelectItem value="sent_to_logist">Передана логисту</SelectItem>
                         <SelectItem value="received_by_logist">Получена логистом</SelectItem>
@@ -173,6 +206,20 @@ export default function Manager() {
                 </CardContent>
               </Card>
 
+              {/* Debug Info */}
+              <Card className="border-blue-200 bg-blue-50">
+                <CardContent className="pt-6">
+                  <div className="text-sm space-y-2">
+                    <div><strong>Всего посылок из API:</strong> {packages?.length || 0}</div>
+                    <div><strong>После фильтрации:</strong> {filteredPackages.length}</div>
+                    <div><strong>Загрузка:</strong> {packagesLoading ? 'Да' : 'Нет'}</div>
+                    <div><strong>Ошибка:</strong> {packagesError?.message || 'Нет'}</div>
+                    <div><strong>Поисковый запрос:</strong> "{searchTerm}"</div>
+                    <div><strong>Фильтр статуса:</strong> "{statusFilter || 'не выбран'}"</div>
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* Statistics Cards */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Card>
@@ -181,7 +228,7 @@ export default function Manager() {
                       <Package className="h-8 w-8 text-blue-600" />
                       <div className="ml-4">
                         <p className="text-sm font-medium text-gray-600">Всего посылок</p>
-                        <p className="text-2xl font-bold">{packages?.length || 0}</p>
+                        <p className="text-2xl font-bold">{filteredPackages.length}</p>
                       </div>
                     </div>
                   </CardContent>
@@ -193,7 +240,7 @@ export default function Manager() {
                       <div className="ml-4">
                         <p className="text-sm font-medium text-gray-600">Требует действий</p>
                         <p className="text-2xl font-bold">
-                          {packages?.filter(pkg => ['created', 'logist_confirmed', 'confirmed_by_client', 'awaiting_processing', 'shipped'].includes(pkg.status)).length || 0}
+                          {filteredPackages.filter(pkg => ['created', 'logist_confirmed', 'confirmed_by_client', 'awaiting_processing', 'shipped'].includes(pkg.status)).length}
                         </p>
                       </div>
                     </div>
@@ -206,7 +253,7 @@ export default function Manager() {
                       <div className="ml-4">
                         <p className="text-sm font-medium text-gray-600">В пути</p>
                         <p className="text-2xl font-bold">
-                          {packages?.filter(pkg => ['sent_to_logist', 'received_by_logist', 'awaiting_shipping'].includes(pkg.status)).length || 0}
+                          {filteredPackages.filter(pkg => ['sent_to_logist', 'received_by_logist', 'awaiting_shipping'].includes(pkg.status)).length}
                         </p>
                       </div>
                     </div>
@@ -219,7 +266,7 @@ export default function Manager() {
                       <div className="ml-4">
                         <p className="text-sm font-medium text-gray-600">Завершено</p>
                         <p className="text-2xl font-bold">
-                          {packages?.filter(pkg => pkg.status === 'paid').length || 0}
+                          {filteredPackages.filter(pkg => pkg.status === 'paid').length}
                         </p>
                       </div>
                     </div>
@@ -232,17 +279,29 @@ export default function Manager() {
                 <div className="flex justify-center py-12">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
                 </div>
-              ) : packages?.length === 0 ? (
+              ) : filteredPackages.length === 0 ? (
                 <Card>
                   <CardContent className="pt-6 text-center py-12">
                     <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">Посылки не найдены</h3>
-                    <p className="text-gray-600">Пока нет посылок для управления</p>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      {packages?.length === 0 ? 'Посылки не найдены' : 'Нет посылок по выбранным фильтрам'}
+                    </h3>
+                    <p className="text-gray-600 mb-4">
+                      {packages?.length === 0 
+                        ? 'Пока нет посылок для управления' 
+                        : 'Попробуйте изменить фильтры поиска'}
+                    </p>
+                    {packages?.length === 0 && (
+                      <Button onClick={handleRefresh} variant="outline">
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        Обновить список
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               ) : (
                 <div className="space-y-4">
-                  {packages?.map((pkg: PackageType) => (
+                  {filteredPackages.map((pkg: PackageType) => (
                     <ManagerPackageCard
                       key={pkg.id}
                       package={pkg}
@@ -264,7 +323,7 @@ export default function Manager() {
           </TabsContent>
 
           <TabsContent value="analytics" className="mt-6">
-            <AnalyticsPanel packages={packages} />
+            <AnalyticsPanel packages={filteredPackages} />
           </TabsContent>
         </Tabs>
       </div>
