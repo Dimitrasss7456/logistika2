@@ -11,7 +11,7 @@ export default function PackageStatus({ status, userRole }: PackageStatusProps) 
   const getStatusInfo = (status: string, role?: string) => {
     const statusMap = {
       // Client statuses
-      'created_client': { text: 'Создана', color: 'bg-blue-100 text-blue-800', progress: 10 },
+      'created': { text: 'Создана', color: 'bg-blue-100 text-blue-800', progress: 10 },
       'client_received': { text: 'Получена логистом', color: 'bg-green-100 text-green-800', progress: 30 },
       'awaiting_processing_client': { text: 'Ожидает обработки', color: 'bg-yellow-100 text-yellow-800', progress: 50 },
       'awaiting_payment_client': { text: 'Ожидает оплаты', color: 'bg-orange-100 text-orange-800', progress: 70 },

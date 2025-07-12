@@ -90,7 +90,7 @@ export default function Admin() {
 
   const getStatusText = (status: string) => {
     const statusMap: Record<string, string> = {
-      'created_admin': 'Создана',
+      'created': 'Создана',
       'sent_to_logist': 'Передана логисту',
       'logist_confirmed': 'Логист подтвердил получение',
       'info_sent_to_client': 'Передана информация клиенту',
@@ -106,7 +106,7 @@ export default function Admin() {
 
   const getStatusColor = (status: string) => {
     const colorMap: Record<string, string> = {
-      'created_admin': 'bg-blue-100 text-blue-800',
+      'created': 'bg-blue-100 text-blue-800',
       'sent_to_logist': 'bg-yellow-100 text-yellow-800',
       'logist_confirmed': 'bg-green-100 text-green-800',
       'info_sent_to_client': 'bg-purple-100 text-purple-800',
@@ -192,7 +192,7 @@ export default function Admin() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Все статусы</SelectItem>
-                      <SelectItem value="created_admin">Создана</SelectItem>
+                      <SelectItem value="created">Создана</SelectItem>
                       <SelectItem value="sent_to_logist">Передана логисту</SelectItem>
                       <SelectItem value="logist_confirmed">Логист подтвердил</SelectItem>
                       <SelectItem value="info_sent_to_client">Передана клиенту</SelectItem>
@@ -346,7 +346,7 @@ function AdminPackageCard({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="created_admin">Создана</SelectItem>
+                <SelectItem value="created">Создана</SelectItem>
                 <SelectItem value="sent_to_logist">Передана логисту</SelectItem>
                 <SelectItem value="logist_confirmed">Логист подтвердил получение</SelectItem>
                 <SelectItem value="info_sent_to_client">Передана информация клиенту</SelectItem>

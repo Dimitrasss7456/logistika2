@@ -270,7 +270,7 @@ export class DatabaseStorage implements IStorage {
   async createPackage(packageData: InsertPackage): Promise<Package> {
     // Generate unique package number
     const uniqueNumber = `PKG-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
-    const packageWithNumber = { ...packageData, uniqueNumber, status: 'created_client' as const };
+    const packageWithNumber = { ...packageData, uniqueNumber, status: 'created' as const };
 
     const [newPackage] = await db.insert(packages).values([packageWithNumber]).returning();
 
