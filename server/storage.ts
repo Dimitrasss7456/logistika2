@@ -126,19 +126,8 @@ export class DatabaseStorage implements IStorage {
       return null;
     }
 
-    // Check if password is already hashed or plain text
-    const bcrypt = require('bcryptjs');
-    let passwordMatches = false;
-    
-    if (foundUser.passwordHash && foundUser.passwordHash.startsWith('$2b$')) {
-      // Password is hashed, use bcrypt compare
-      passwordMatches = await bcrypt.compare(password, foundUser.passwordHash);
-    } else {
-      // For demo/legacy users, simple text comparison
-      passwordMatches = foundUser.passwordHash === password;
-    }
-
-    if (passwordMatches) {
+    // Simple password comparison
+    if (foundUser.passwordHash === password) {
       console.log('Password matches and user is active');
       return foundUser;
     }
