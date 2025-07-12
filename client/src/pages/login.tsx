@@ -146,75 +146,24 @@ export default function Login() {
             Вход в систему
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            Введите логин и пароль для входа в систему
+            Выберите роль для входа в систему
           </p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Вход</CardTitle>
+            <CardTitle>Тестовые учетные записи:</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div>
-                <Label htmlFor="login">Логин</Label>
-                <Input
-                  id="login"
-                  type="text"
-                  autoComplete="username"
-                  {...form.register("login")}
-                  placeholder="Введите логин (например: admin)"
-                />
-                {form.formState.errors.login && (
-                  <p className="text-sm text-red-600 mt-1">
-                    {form.formState.errors.login.message}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="password">Пароль</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  autoComplete="current-password"
-                  {...form.register("password")}
-                  placeholder="Ваш пароль (например: 123456)"
-                />
-                {form.formState.errors.password && (
-                  <p className="text-sm text-red-600 mt-1">
-                    {form.formState.errors.password.message}
-                  </p>
-                )}
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={isLoading}
-              >
-                {isLoading ? "Вход..." : "Войти"}
-              </Button>
-            </form>
-
-            <div className="mt-6">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300" />
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">Быстрый вход</span>
-                </div>
-              </div>
-
-              <div className="mt-6 grid grid-cols-1 gap-3">
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 gap-3">
                 <Button
                   variant="outline"
                   onClick={() => handleDemoLogin("admin")}
                   className="w-full"
                   disabled={isLoading}
                 >
-                  Войти как Администратор (admin/123456)
+                  Администратор: admin@package.ru / 123456
                 </Button>
                 <Button
                   variant="outline"
@@ -222,7 +171,7 @@ export default function Login() {
                   className="w-full"
                   disabled={isLoading}
                 >
-                  Войти как Менеджер (manager/123456)
+                  Менеджер: manager@package.ru / 123456
                 </Button>
                 <Button
                   variant="outline"
@@ -230,7 +179,7 @@ export default function Login() {
                   className="w-full"
                   disabled={isLoading}
                 >
-                  Войти как Клиент (client/123456)
+                  Клиент: client@package.ru / 123456
                 </Button>
                 <Button
                   variant="outline"
@@ -238,22 +187,9 @@ export default function Login() {
                   className="w-full"
                   disabled={isLoading}
                 >
-                  Войти как Логист (logist/123456)
+                  Логист: logist@package.ru / 123456
                 </Button>
               </div>
-            </div>
-
-            <div className="mt-6 text-center">
-              <button
-                type="button"
-                onClick={handlePasswordReset}
-                className="text-primary hover:text-primary-dark text-sm"
-              >
-                Восстановить доступ
-              </button>
-              <p className="text-xs text-gray-500 mt-2">
-                Запрос будет отправлен администратору
-              </p>
             </div>
           </CardContent>
         </Card>
