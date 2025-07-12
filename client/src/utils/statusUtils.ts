@@ -1,5 +1,7 @@
 import { PackageStatus } from "@/types";
+```
 
+```typescript
 // Статусы для каждой роли согласно ТЗ
 export const CLIENT_STATUSES = {
   created: "Создана",
@@ -110,63 +112,35 @@ export function getStatusColor(status: PackageStatus): string {
 
 export const getNextStatuses = (currentStatus: string): { value: string; label: string }[] => {
   const statusFlow = {
-    created_client: [
-      { value: 'confirmed_manager', label: 'Подтверждено менеджером' },
-      { value: 'cancelled', label: 'Отменено' }
+    created: [
+      { value: 'sent_to_logist', label: 'Передать логисту' }
     ],
-    confirmed_manager: [
-      { value: 'accepted_by_logist', label: 'Принято логистом' },
-      { value: 'cancelled', label: 'Отменено' }
+    sent_to_logist: [
+      { value: 'logist_confirmed', label: 'Логист подтвердил' }
     ],
-    accepted_by_logist: [
-      { value: 'in_transit', label: 'В пути' },
-      { value: 'cancelled', label: 'Отменено' }
+    logist_confirmed: [
+      { value: 'info_sent_to_client', label: 'Передать информацию клиенту' }
     ],
-    in_transit: [
-      { value: 'out_for_delivery', label: 'На доставке' },
-      { value: 'cancelled', label: 'Отменено' }
+    info_sent_to_client: [
+      { value: 'confirmed_by_client', label: 'Клиент подтвердил' }
     ],
-    out_for_delivery: [
-      { value: 'delivered', label: 'Доставлено' },
-      { value: 'failed_delivery', label: 'Неудачная доставка' }
+    confirmed_by_client: [
+      { value: 'awaiting_payment', label: 'Ожидает оплаты' }
     ],
-    failed_delivery: [
-      { value: 'out_for_delivery', label: 'Повторная доставка' },
-      { value: 'cancelled', label: 'Отменено' }
+    awaiting_payment: [
+      { value: 'awaiting_processing', label: 'В обработке' }
     ],
-    delivered: [],
-    cancelled: []
+    awaiting_processing: [
+      { value: 'awaiting_shipping', label: 'Готов к отправке' }
+    ],
+    awaiting_shipping: [
+      { value: 'shipped', label: 'Отправлено' }
+    ],
+    shipped: [
+      { value: 'paid', label: 'Оплачено' }
+    ],
+    paid: []
   };
 
   return statusFlow[currentStatus] || [];
-};
-
-export const getStatusLabel = (status: string): string => {
-  const labels = {
-    created_client: 'Создано клиентом',
-    confirmed_manager: 'Подтверждено менеджером',
-    accepted_by_logist: 'Принято логистом',
-    in_transit: 'В пути',
-    out_for_delivery: 'На доставке',
-    delivered: 'Доставлено',
-    failed_delivery: 'Неудачная доставка',
-    cancelled: 'Отменено'
-  };
-
-  return labels[status] || status;
-};
-
-export const getStatusColor = (status: string): string => {
-  const colors = {
-    created_client: 'bg-blue-100 text-blue-800',
-    confirmed_manager: 'bg-yellow-100 text-yellow-800',
-    accepted_by_logist: 'bg-purple-100 text-purple-800',
-    in_transit: 'bg-orange-100 text-orange-800',
-    out_for_delivery: 'bg-indigo-100 text-indigo-800',
-    delivered: 'bg-green-100 text-green-800',
-    failed_delivery: 'bg-red-100 text-red-800',
-    cancelled: 'bg-gray-100 text-gray-800'
-  };
-
-  return colors[status] || 'bg-gray-100 text-gray-800';
 };
