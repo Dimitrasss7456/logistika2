@@ -397,19 +397,53 @@ function UserManagement() {
     toggleUserAccess.mutate({ userId, isActive: !currentAccess });
   };
 
-  const createUser = useMutation({
+  // Новая система создания пользователей
+  const [newUserData, setNewUserData] = useState({
+    firstName: '',
+    lastName: '',
+    login: '',
+    password: '',
+    email: '',
+    telegramUsername: '',
+    role: '',
+    location: '',
+    address: '',
+    supportsLockers: false,
+    supportsOffices: false,
+  });
+
+  const createUserMutation = useMutation({
     mutationFn: async (userData: any) => {
-      return await apiRequest("POST", "/api/users", userData);
+      console.log('Отправляем данные пользователя:', userData);
+      const response = await apiRequest("POST", "/api/users", userData);
+      console.log('Ответ сервера:', response);
+      return response;
     },
     onSuccess: (data) => {
+      console.log('Пользователь успешно создан:', data);
       queryClient.invalidateQueries({ queryKey: ["users"] });
       setGeneratedCredentials(data.credentials);
+      // Сбрасываем форму
+      setNewUserData({
+        firstName: '',
+        lastName: '',
+        login: '',
+        password: '',
+        email: '',
+        telegramUsername: '',
+        role: '',
+        location: '',
+        address: '',
+        supportsLockers: false,
+        supportsOffices: false,
+      });
       toast({
         title: "Пользователь создан",
-        description: "Логин и пароль сгенерированы успешно",
+        description: `Пользователь с логином ${data.credentials.login} успешно создан`,
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Ошибка создания пользователя:', error);
       toast({
         title: "Ошибка",
         description: "Не удалось создать пользователя",
@@ -418,24 +452,9 @@ function UserManagement() {
     },
   });
 
-  const handleCreateUser = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const userData = {
-      firstName: formData.get('firstName'),
-      lastName: formData.get('lastName'),
-      email: formData.get('email'),
-      telegramUsername: formData.get('telegramUsername'),
-      login: formData.get('login'),
-      password: formData.get('password'),
-      role: formData.get('role'),
-      location: formData.get('location'),
-      address: formData.get('address'),
-      supportsLockers: formData.get('supportsLockers') === 'on',
-      supportsOffices: formData.get('supportsOffices') === 'on',
-    };
-    console.log('Submitting user data:', userData);
-    createUser.mutate(userData);
+  const handleCreateUser = () => {
+    console.log('Данные перед отправкой:', newUserData);
+    createUserMutation.mutate(newUserData);
   };
 
   const copyToClipboard = (text: string) => {
@@ -523,38 +542,75 @@ function UserManagement() {
                     </Button>
                   </div>
                 ) : (
-                  <form onSubmit={handleCreateUser} className="space-y-4">
+                  <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="firstName">Имя</Label>
-                        <Input id="firstName" name="firstName" required />
+                        <Input 
+                          id="firstName" 
+                          value={newUserData.firstName}
+                          onChange={(e) => setNewUserData({...newUserData, firstName: e.target.value})}
+                          required 
+                        />
                       </div>
                       <div>
                         <Label htmlFor="lastName">Фамилия</Label>
-                        <Input id="lastName" name="lastName" required />
+                        <Input 
+                          id="lastName" 
+                          value={newUserData.lastName}
+                          onChange={(e) => setNewUserData({...newUserData, lastName: e.target.value})}
+                          required 
+                        />
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="login">Логин</Label>
-                        <Input id="login" name="login" required placeholder="Введите логин" />
+                        <Input 
+                          id="login" 
+                          value={newUserData.login}
+                          onChange={(e) => setNewUserData({...newUserData, login: e.target.value})}
+                          required 
+                          placeholder="Введите логин" 
+                        />
                       </div>
                       <div>
                         <Label htmlFor="password">Пароль</Label>
-                        <Input id="password" name="password" type="password" required placeholder="Введите пароль" />
+                        <Input 
+                          id="password" 
+                          type="password" 
+                          value={newUserData.password}
+                          onChange={(e) => setNewUserData({...newUserData, password: e.target.value})}
+                          required 
+                          placeholder="Введите пароль" 
+                        />
                       </div>
                     </div>
                     <div>
                       <Label htmlFor="email">Email (опционально)</Label>
-                      <Input id="email" name="email" type="email" placeholder="Если не указан, будет сгенерирован" />
+                      <Input 
+                        id="email" 
+                        type="email" 
+                        value={newUserData.email}
+                        onChange={(e) => setNewUserData({...newUserData, email: e.target.value})}
+                        placeholder="Если не указан, будет сгенерирован" 
+                      />
                     </div>
                     <div>
                       <Label htmlFor="telegramUsername">Telegram</Label>
-                      <Input id="telegramUsername" name="telegramUsername" placeholder="@username" />
+                      <Input 
+                        id="telegramUsername" 
+                        value={newUserData.telegramUsername}
+                        onChange={(e) => setNewUserData({...newUserData, telegramUsername: e.target.value})}
+                        placeholder="@username" 
+                      />
                     </div>
                     <div>
                       <Label htmlFor="role">Роль</Label>
-                      <Select name="role" required>
+                      <Select 
+                        value={newUserData.role} 
+                        onValueChange={(value) => setNewUserData({...newUserData, role: value})}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Выберите роль" />
                         </SelectTrigger>
@@ -566,35 +622,61 @@ function UserManagement() {
                         </SelectContent>
                       </Select>
                     </div>
-                    <div id="logist-fields" className="space-y-4">
-                      <div>
-                        <Label htmlFor="location">Локация (для логистов)</Label>
-                        <Input id="location" name="location" placeholder="Город" />
-                      </div>
-                      <div>
-                        <Label htmlFor="address">Адрес (для логистов)</Label>
-                        <Input id="address" name="address" placeholder="Полный адрес" />
-                      </div>
-                      <div className="flex gap-4">
-                        <div className="flex items-center space-x-2">
-                          <input type="checkbox" id="supportsLockers" name="supportsLockers" />
-                          <Label htmlFor="supportsLockers">Локеры</Label>
+                    {newUserData.role === 'logist' && (
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="location">Локация</Label>
+                          <Input 
+                            id="location" 
+                            value={newUserData.location}
+                            onChange={(e) => setNewUserData({...newUserData, location: e.target.value})}
+                            placeholder="Город" 
+                          />
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <input type="checkbox" id="supportsOffices" name="supportsOffices" />
-                          <Label htmlFor="supportsOffices">Офисы</Label>
+                        <div>
+                          <Label htmlFor="address">Адрес</Label>
+                          <Input 
+                            id="address" 
+                            value={newUserData.address}
+                            onChange={(e) => setNewUserData({...newUserData, address: e.target.value})}
+                            placeholder="Полный адрес" 
+                          />
+                        </div>
+                        <div className="flex gap-4">
+                          <div className="flex items-center space-x-2">
+                            <input 
+                              type="checkbox" 
+                              id="supportsLockers" 
+                              checked={newUserData.supportsLockers}
+                              onChange={(e) => setNewUserData({...newUserData, supportsLockers: e.target.checked})}
+                            />
+                            <Label htmlFor="supportsLockers">Локеры</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <input 
+                              type="checkbox" 
+                              id="supportsOffices" 
+                              checked={newUserData.supportsOffices}
+                              onChange={(e) => setNewUserData({...newUserData, supportsOffices: e.target.checked})}
+                            />
+                            <Label htmlFor="supportsOffices">Офисы</Label>
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    )}
                     <div className="flex gap-2">
-                      <Button type="submit" disabled={createUser.isPending} className="flex-1">
-                        {createUser.isPending ? "Создание..." : "Создать"}
+                      <Button 
+                        onClick={handleCreateUser} 
+                        disabled={createUserMutation.isPending || !newUserData.firstName || !newUserData.lastName || !newUserData.login || !newUserData.password || !newUserData.role} 
+                        className="flex-1"
+                      >
+                        {createUserMutation.isPending ? "Создание..." : "Создать"}
                       </Button>
                       <Button type="button" variant="outline" onClick={() => setIsCreateModalOpen(false)}>
                         Отмена
                       </Button>
                     </div>
-                  </form>
+                  </div>
                 )}
               </DialogContent>
             </Dialog>
