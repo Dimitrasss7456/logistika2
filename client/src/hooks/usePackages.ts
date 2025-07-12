@@ -18,9 +18,9 @@ export function usePackages(filters?: {
   return useQuery<Package[]>({
     queryKey,
     queryFn: async () => {
-      // Build URL with filters, but only include non-empty values
+      // Build URL with filters, but only include non-empty values and exclude 'all'
       const validFilters: Record<string, string> = {};
-      if (filters?.status) validFilters.status = filters.status;
+      if (filters?.status && filters.status !== 'all') validFilters.status = filters.status;
       if (filters?.search) validFilters.search = filters.search;
       
       const url = Object.keys(validFilters).length > 0 

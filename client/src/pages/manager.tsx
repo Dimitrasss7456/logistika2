@@ -52,10 +52,10 @@ export default function Manager() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  // Fetch packages without any pre-filtering - let manager see all packages
+  // Fetch packages without status filtering - let manager see all packages
   const { data: packages, isLoading: packagesLoading, error: packagesError, refetch: refetchPackages } = usePackages({
     search: searchTerm || undefined,
-    status: statusFilter || undefined,
+    // Don't pass status filter to API - filter locally instead
   });
 
   const { data: users, isLoading: usersLoading } = useUsers();
