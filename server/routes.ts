@@ -131,7 +131,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/users/:id/access', isAuthenticated, async (req: any, res) => {
+  app.put('/api/users/:id/access', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = req.user;
       if (currentUser?.role !== 'admin' && currentUser?.role !== 'manager') {
@@ -139,6 +139,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { isActive } = req.body;
+      console.log('Updating user access:', { userId: req.params.id, isActive });
       await storage.toggleUserAccess(req.params.id, isActive);
       res.json({ message: "Доступ пользователя обновлен" });
     } catch (error) {

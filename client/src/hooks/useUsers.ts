@@ -23,10 +23,7 @@ export function useUpdateUserRole() {
 
   return useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
-      await apiRequest(`/api/users/${userId}/role`, {
-        method: 'PUT',
-        body: JSON.stringify({ role }),
-      });
+      return await apiRequest('PATCH', `/api/users/${userId}/role`, { role });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/users'] });
@@ -35,7 +32,8 @@ export function useUpdateUserRole() {
         description: 'Роль пользователя успешно обновлена',
       });
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error('Update user role error:', error);
       toast({
         title: 'Ошибка',
         description: 'Не удалось обновить роль пользователя',
@@ -51,10 +49,7 @@ export function useToggleUserAccess() {
 
   return useMutation({
     mutationFn: async ({ userId, isActive }: { userId: string; isActive: boolean }) => {
-      await apiRequest(`/api/users/${userId}/access`, {
-        method: 'PUT',
-        body: JSON.stringify({ isActive }),
-      });
+      return await apiRequest('PUT', `/api/users/${userId}/access`, { isActive });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/users'] });
@@ -63,7 +58,8 @@ export function useToggleUserAccess() {
         description: 'Доступ пользователя успешно обновлен',
       });
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error('Toggle user access error:', error);
       toast({
         title: 'Ошибка',
         description: 'Не удалось обновить доступ пользователя',

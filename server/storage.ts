@@ -157,10 +157,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async toggleUserAccess(userId: string, isActive: boolean): Promise<void> {
-    await db
+    console.log('Toggling user access in storage:', { userId, isActive });
+    const result = await db
       .update(users)
       .set({ isActive, updatedAt: new Date() })
-      .where(eq(users.id, userId));
+      .where(eq(users.id, userId))
+      .returning();
+    console.log('User access toggled successfully:', result);
   }
 
   // Logist operations
