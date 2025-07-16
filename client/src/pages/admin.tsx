@@ -14,7 +14,7 @@ import { Package as PackageType, User } from "@/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle, XCircle, Edit, UserCheck, UserX, TrendingUp, Calendar, DollarSign, Activity, Save, RefreshCw, Database, Server, Mail, Globe } from "lucide-react";
+import { CheckCircle, XCircle, Edit, UserCheck, UserX, TrendingUp, Calendar, DollarSign, Activity, Save, RefreshCw, Database, Server, Mail, Globe, Shield, Bell } from "lucide-react";
 import { useLocation } from "wouter";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
