@@ -138,37 +138,13 @@ export function useUpdateLogist() {
   });
 }
 
-export function useUpdateUserCredentials() {
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-  return useMutation({
-    mutationFn: ({ userId, login, password }: { userId: string; login?: string; password?: string }) => {
-      return apiRequest('PUT', `/api/users/${userId}/credentials`, { login, password });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
-      toast({
-        title: 'Успех',
-        description: 'Данные пользователя успешно обновлены',
-      });
-    },
-    onError: (error: any) => {
-      console.error('Update user credentials error:', error);
-      toast({
-        title: 'Ошибка',
-        description: 'Не удалось обновить данные пользователя',
-        variant: 'destructive',
-      });
-    },
-  });
-}
-
 export function useDeleteUser() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
   return useMutation({
-    mutationFn: (userId: string) => {
-      return apiRequest('DELETE', `/api/users/${userId}`);
+    mutationFn: async (userId: string) => {
+      return await apiRequest('DELETE', `/api/users/${userId}`, {});
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/users'] });
@@ -183,6 +159,32 @@ export function useDeleteUser() {
       toast({
         title: 'Ошибка',
         description: error.message || 'Не удалось удалить пользователя',
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
+export function useUpdateUserCredentials() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ userId, login, password }: { userId: string; login: string; password: string }) => {
+      return await apiRequest('PUT', `/api/users/${userId}/credentials`, { login, password });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+      toast({
+        title: 'Успех',
+        description: 'Данные пользователя успешно обновлены',
+      });
+    },
+    onError: (error: any) => {
+      console.error('Update credentials error:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось обновить данные пользователя',
         variant: 'destructive',
       });
     },

@@ -58,7 +58,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log('=== POST /api/users запрос получен ===');
     console.log('Request body:', req.body);
     console.log('Current user:', req.user);
-    
+
     try {
       const currentUser = req.user;
       if (currentUser?.role !== 'admin' && currentUser?.role !== 'manager') {
@@ -318,7 +318,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         itemName: req.body.itemName,
         shopName: req.body.shopName,
         comments: req.body.comments || null,
-        status: 'created',
+        status: 'created_client',
         adminComments: null,
         paymentAmount: null,
         paymentDetails: null,
@@ -326,9 +326,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const createdPackage = await storage.createPackage(packageData);
 
-      // Create notification for admin
-      // Notification is already created in storage.createPackage method
-      // No need to create duplicate notification here
+      // Уведомить менеджеров о новой посылке
+      const managers = await storage.getUsersByRole('admin');
+      const managerIds = managers.map(m => m.id);
+
+      await storage.createNotification({
+        userIds: managerIds,
+        title: 'Новая посылка',
+        message: `Создана новая посылка ${createdPackage.uniqueNumber} от клиента ${currentUser.firstName} ${currentUser.lastName}`,
+        type: 'package_created'
+      });
 
       res.json(createdPackage);
     } catch (error) {
@@ -617,6 +624,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json({ message: "Выход выполнен" });
     });
+  });
+
+  app.delete('/api/packages/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = req.user;
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Доступ запрещен" });
+      }
+
+      await storage.deletePackage(parseInt(req.params.id));
+      res.json({ message: "Посылка удалена" });
+    } catch (error) {
+      console.error("Error deleting package:", error);
+      res.status(500).json({ message: "Ошибка удаления посылки" });
+    }
+  });
+
+  // Передача посылки логисту менеджером
+  app.post('/api/packages/:id/send-to-logist', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = req.user;
+      if (currentUser?.role !== 'admin' && currentUser?.role !== 'manager') {
+        return res.status(403).json({ message: "Доступ запрещен" });
+      }
+
+      const packageId = parseInt(req.params.id);
+      const pkg = await storage.getPackageById(packageId);
+
+      if (!pkg) {
+        return res.status(404).json({ message: "Посылка не найдена" });
+      }
+
+      if (pkg.status !== 'created_manager') {
+        return res.status(400).json({ message: "Посылка не в статусе для передачи логисту" });
+      }
+
+      // Обновить статус посылки
+      await storage.updatePackageStatus(packageId, 'sent_to_logist');
+
+      // Уведомить логиста
+      const logist = await storage.getLogistByUserId(pkg.logistId);
+      if(logist){
+           await storage.createNotification({
+            userId: logist.userId,
+            title: 'Новая посылка для обработки',
+            message: `Вам передана посылка ${pkg.uniqueNumber} для обработки`,
+            type: 'package_assigned'
+          });
+      }
+
+
+      res.json({ message: "Посылка передана логисту" });
+    } catch (error) {
+      console.error("Error sending package to logist:", error);
+      res.status(500).json({ message: "Ошибка передачи посылки" });
+    }
   });
 
   const httpServer = createServer(app);

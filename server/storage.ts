@@ -168,6 +168,13 @@ export class DatabaseStorage implements IStorage {
     console.log('User access toggled successfully:', result);
   }
 
+  async updateUserCredentials(userId: string, login: string, password: string): Promise<void> {
+    await db
+      .update(users)
+      .set({ login, passwordHash: password, updatedAt: new Date() })
+      .where(eq(users.id, userId));
+  }
+
   async updateUserCredentials(userId: string, login?: string, password?: string): Promise<void> {
     const updateData: any = { updatedAt: new Date() };
     if (login) updateData.login = login;

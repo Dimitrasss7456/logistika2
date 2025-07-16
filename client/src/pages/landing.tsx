@@ -94,6 +94,19 @@ export default function Landing() {
                   >
                     {loginMutation.isPending ? "Вход..." : "Войти"}
                   </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    className="w-full" 
+                    onClick={() => {
+                      toast({
+                        title: "Сброс пароля",
+                        description: "Обратитесь к администратору для сброса пароля",
+                      });
+                    }}
+                  >
+                    Сбросить пароль
+                  </Button>
                 </form>
               </CardContent>
             </Card>

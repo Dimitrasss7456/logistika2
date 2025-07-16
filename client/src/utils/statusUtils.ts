@@ -142,3 +142,82 @@ export const getNextStatuses = (currentStatus: string): { value: string; label: 
 
   return statusFlow[currentStatus] || [];
 };
+
+export const getStatusText = (status: string, userRole: string) => {
+  const statusTexts: Record<string, Record<string, string>> = {
+    created_client: {
+      client: "Создана",
+      admin: "Создана", 
+      manager: "Создана",
+      logist: "Создана"
+    },
+    created_manager: {
+      client: "Создана",
+      admin: "Создана", 
+      manager: "Создана",
+      logist: "Создана"
+    },
+    sent_to_logist: {
+      client: "Передана логисту",
+      admin: "Передана логисту",
+      manager: "Передана логисту", 
+      logist: "Получена информация о посылке"
+    },
+    received_by_logist: {
+      client: "Получена логистом",
+      admin: "Логист подтвердил получение",
+      manager: "Логист подтвердил получение",
+      logist: "Посылка получена"
+    },
+    info_sent_to_client: {
+      client: "Получена логистом",
+      admin: "Передана информация клиенту",
+      manager: "Передана информация клиенту",
+      logist: "Передана информация клиенту"
+    },
+    confirmed_by_client: {
+      client: "Ожидает обработки",
+      admin: "Подтверждена клиентом",
+      manager: "Подтверждена клиентом",
+      logist: "Подтверждена клиентом"
+    },
+    awaiting_payment: {
+      client: "Ожидает оплаты",
+      admin: "Ожидает оплаты",
+      manager: "Ожидает оплаты",
+      logist: "Ожидает оплаты"
+    },
+    awaiting_processing: {
+      client: "Ожидает отправки",
+      admin: "Ожидает обработки",
+      manager: "Ожидает обработки",
+      logist: "Ожидает обработки"
+    },
+    awaiting_shipping: {
+      client: "Ожидает отправки",
+      admin: "Ожидает отправки",
+      manager: "Ожидает отправки",
+      logist: "Ожидает отправки"
+    },
+    shipped_by_logist: {
+      client: "Отправлена",
+      admin: "Отправлена логистом",
+      manager: "Отправлена логистом",
+      logist: "Отправлена"
+    },
+    shipped_to_client: {
+      client: "Отправлена",
+      admin: "Отправлена",
+      manager: "Отправлена",
+      logist: "Отправлена"
+    },
+    paid: {
+      client: "Оплачена",
+      admin: "Оплачена",
+      manager: "Оплачена",
+      logist: "Оплачена"
+    }
+  };
+
+  return statusTexts[status]?.[userRole] || status;
+};

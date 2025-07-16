@@ -438,11 +438,11 @@ function UserManagement() {
       console.log('Пользователь успешно создан:', data);
       queryClient.invalidateQueries({ queryKey: ["users"] });
       queryClient.invalidateQueries({ queryKey: ["logists"] });
-      
+
       if (data && data.credentials) {
         setGeneratedCredentials(data.credentials);
       }
-      
+
       // Сбрасываем форму
       setNewUserData({
         firstName: '',
@@ -457,7 +457,7 @@ function UserManagement() {
         supportsLockers: false,
         supportsOffices: false,
       });
-      
+
       toast({
         title: "Пользователь создан",
         description: data?.credentials ? `Пользователь с логином ${data.credentials.login} успешно создан` : "Пользователь успешно создан",
@@ -807,6 +807,12 @@ function UserCard({ user, onRoleChange, onAccessToggle, onUpdateCredentials, onD
     }
   };
 
+    const handleEditCredentials = () => {
+        setIsEditDialogOpen(true);
+        setEditLogin(user.login || '');
+        setEditPassword('');
+    };
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -818,8 +824,7 @@ function UserCard({ user, onRoleChange, onAccessToggle, onUpdateCredentials, onD
                 user.email || 'Без имени'
               }
             </CardTitle>
-            <p className="text-sm text-gray-600 mt-1">
-              {user.email}
+            <p className="text-sm text-gray-600 mt-1">              {user.email}
             </p>
             {user.telegramUsername && (
               <p className="text-sm text-gray-600 mt-1">
@@ -865,51 +870,28 @@ function UserCard({ user, onRoleChange, onAccessToggle, onUpdateCredentials, onD
               )}
             </Button>
           </div>
+
           
-          <div className="flex items-center gap-2">
-            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="flex-1">
-                  <Edit className="h-4 w-4 mr-2" />
-                  Редактировать
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Редактировать пользователя</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="edit-login">Логин</Label>
-                    <Input
-                      id="edit-login"
-                      value={editLogin}
-                      onChange={(e) => setEditLogin(e.target.value)}
-                      placeholder="Новый логин"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="edit-password">Пароль</Label>
-                    <Input
-                      id="edit-password"
-                      type="password"
-                      value={editPassword}
-                      onChange={(e) => setEditPassword(e.target.value)}
-                      placeholder="Новый пароль"
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button onClick={handleSaveCredentials} disabled={!editLogin || !editPassword}>
-                      Сохранить
-                    </Button>
-                    <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                      Отмена
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-            
+          <div className="flex gap-2">
+            <Button
+              onClick={handleEditCredentials}
+              variant="outline"
+              size="sm"
+            >
+              Изменить данные
+            </Button>
+            <Button
+              
+              variant="outline"
+              size="sm"
+              onClick={() => onAccessToggle(user.id, user.isActive)}
+            >
+              {user.isActive ? (
+                <UserX className="h-4 w-4" />
+              ) : (
+                <UserCheck className="h-4 w-4" />
+              )}
+            </Button>
             <Button
               variant={confirmDelete ? "destructive" : "outline"}
               size="sm"
@@ -923,6 +905,43 @@ function UserCard({ user, onRoleChange, onAccessToggle, onUpdateCredentials, onD
           Создан: {new Date(user.createdAt).toLocaleDateString()}
         </div>
       </CardContent>
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Изменить данные пользователя</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="editLogin">Логин</Label>
+              <Input
+                id="editLogin"
+                value={editLogin}
+                onChange={(e) => setEditLogin(e.target.value)}
+                placeholder="Введите новый логин"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="editPassword">Пароль</Label>
+              <Input
+                id="editPassword"
+                type="password"
+                value={editPassword}
+                onChange={(e) => setEditPassword(e.target.value)}
+                placeholder="Введите новый пароль"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={handleSaveCredentials} disabled={!editLogin || !editPassword}>
+                Сохранить
+              </Button>
+              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                Отмена
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
