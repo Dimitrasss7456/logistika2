@@ -12,6 +12,7 @@ import { Link } from "wouter";
 export default function Landing() {
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
+  const [isResetting, setIsResetting] = useState(false);
   const { toast } = useToast();
 
   const loginMutation = useMutation({
@@ -45,6 +46,47 @@ export default function Landing() {
       return;
     }
     loginMutation.mutate({ login, password });
+  };
+
+  const handlePasswordReset = async () => {
+    if (!login) {
+      toast({
+        title: "Ошибка",
+        description: "Введите логин для сброса пароля",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsResetting(true);
+    try {
+      const response = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: login }),
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Ошибка запроса сброса пароля");
+      }
+
+      toast({
+        title: "Запрос отправлен",
+        description: "Администратор получил уведомление о сбросе пароля и свяжется с вами в Telegram",
+      });
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: error instanceof Error ? error.message : "Произошла ошибка",
+        variant: "destructive",
+      });
+    } finally {
+      setIsResetting(false);
+    }
   };
 
   return (
@@ -98,14 +140,10 @@ export default function Landing() {
                     type="button" 
                     variant="outline"
                     className="w-full" 
-                    onClick={() => {
-                      toast({
-                        title: "Сброс пароля",
-                        description: "Обратитесь к администратору для сброса пароля",
-                      });
-                    }}
+                    onClick={handlePasswordReset}
+                    disabled={isResetting}
                   >
-                    Сбросить пароль
+                    {isResetting ? "Отправка..." : "Сбросить пароль"}
                   </Button>
                 </form>
               </CardContent>
