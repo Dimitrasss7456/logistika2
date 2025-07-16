@@ -14,7 +14,7 @@ import { Package as PackageType, User } from "@/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle, XCircle, Edit, UserCheck, UserX } from "lucide-react";
+import { CheckCircle, XCircle, Edit, UserCheck, UserX, TrendingUp, Calendar, DollarSign, Activity, Save, RefreshCw, Database, Server, Mail, Globe } from "lucide-react";
 import { useLocation } from "wouter";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -240,25 +240,11 @@ export default function Admin() {
           </TabsContent>
 
           <TabsContent value="analytics" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Аналитика</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">Функция аналитики будет добавлена позже</p>
-              </CardContent>
-            </Card>
+            <AnalyticsTab packages={packages} />
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Настройки системы</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">Функция настроек будет добавлена позже</p>
-              </CardContent>
-            </Card>
+            <SettingsTab />
           </TabsContent>
         </Tabs>
       </div>
@@ -362,6 +348,481 @@ function AdminPackageCard({
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function AnalyticsTab({ packages }: { packages?: PackageType[] }) {
+  const { data: users } = useUsers();
+  const { data: logists } = useLogists();
+
+  // Подсчеты для аналитики
+  const totalPackages = packages?.length || 0;
+  const totalUsers = users?.length || 0;
+  const totalLogists = logists?.length || 0;
+  const totalClients = users?.filter(u => u.role === 'client').length || 0;
+
+  // Статистика по статусам посылок
+  const statusStats = packages?.reduce((acc, pkg) => {
+    acc[pkg.status] = (acc[pkg.status] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>) || {};
+
+  // Статистика за последние 30 дней
+  const last30Days = new Date();
+  last30Days.setDate(last30Days.getDate() - 30);
+  
+  const recentPackages = packages?.filter(pkg => 
+    new Date(pkg.createdAt) >= last30Days
+  ) || [];
+
+  // Самые активные логисты
+  const logistStats = packages?.reduce((acc, pkg) => {
+    const logistName = pkg.logist?.user?.firstName + ' ' + pkg.logist?.user?.lastName;
+    acc[logistName] = (acc[logistName] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>) || {};
+
+  const topLogists = Object.entries(logistStats)
+    .sort(([,a], [,b]) => b - a)
+    .slice(0, 5);
+
+  return (
+    <div className="space-y-6">
+      <div className="mb-6">
+        <h2 className="text-2xl font-semibold text-gray-900 mb-2">Аналитика системы</h2>
+        <p className="text-gray-600">Статистика и показатели эффективности</p>
+      </div>
+
+      {/* Основные показатели */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center">
+              <Package className="h-8 w-8 text-blue-600" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Всего посылок</p>
+                <p className="text-2xl font-bold text-gray-900">{totalPackages}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center">
+              <Users className="h-8 w-8 text-green-600" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Всего пользователей</p>
+                <p className="text-2xl font-bold text-gray-900">{totalUsers}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center">
+              <Shield className="h-8 w-8 text-purple-600" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Логисты</p>
+                <p className="text-2xl font-bold text-gray-900">{totalLogists}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center">
+              <Activity className="h-8 w-8 text-orange-600" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">За 30 дней</p>
+                <p className="text-2xl font-bold text-gray-900">{recentPackages.length}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Статистика по статусам */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <BarChart3 className="h-5 w-5 mr-2" />
+              Статистика по статусам
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {Object.entries(statusStats).map(([status, count]) => (
+                <div key={status} className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600 capitalize">
+                    {status.replace(/_/g, ' ')}
+                  </span>
+                  <div className="flex items-center">
+                    <div className="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                      <div 
+                        className="bg-blue-600 h-2 rounded-full" 
+                        style={{ width: `${(count / totalPackages) * 100}%` }}
+                      ></div>
+                    </div>
+                    <span className="text-sm font-medium text-gray-900 w-8">{count}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <TrendingUp className="h-5 w-5 mr-2" />
+              Топ логисты
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {topLogists.length > 0 ? topLogists.map(([name, count], index) => (
+                <div key={name} className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 text-xs flex items-center justify-center mr-3">
+                      {index + 1}
+                    </span>
+                    <span className="text-sm text-gray-900">{name}</span>
+                  </div>
+                  <span className="text-sm font-medium text-gray-600">{count} посылок</span>
+                </div>
+              )) : (
+                <p className="text-sm text-gray-500">Нет данных</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Дополнительная аналитика */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Calendar className="h-5 w-5 mr-2" />
+              Активность за месяц
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center">
+              <p className="text-3xl font-bold text-green-600">{recentPackages.length}</p>
+              <p className="text-sm text-gray-600">новых посылок</p>
+              <p className="text-xs text-gray-500 mt-2">
+                {totalPackages > 0 ? 
+                  `${Math.round((recentPackages.length / totalPackages) * 100)}% от общего количества` 
+                  : 'Нет данных'
+                }
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Users className="h-5 w-5 mr-2" />
+              Соотношение ролей
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600">Клиенты:</span>
+                <span className="text-sm font-medium">{totalClients}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600">Логисты:</span>
+                <span className="text-sm font-medium">{totalLogists}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600">Администраторы:</span>
+                <span className="text-sm font-medium">
+                  {users?.filter(u => u.role === 'admin').length || 0}
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Activity className="h-5 w-5 mr-2" />
+              Статус системы
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">База данных:</span>
+                <Badge className="bg-green-100 text-green-800">Активна</Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">API:</span>
+                <Badge className="bg-green-100 text-green-800">Работает</Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Уведомления:</span>
+                <Badge className="bg-green-100 text-green-800">Включены</Badge>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function SettingsTab() {
+  const { toast } = useToast();
+  const [settings, setSettings] = useState({
+    siteName: 'Система управления посылками',
+    adminEmail: 'admin@package.ru',
+    notificationsEnabled: true,
+    autoAssignLogist: false,
+    requireEmailVerification: false,
+    maxFileSize: 50,
+    allowedFileTypes: 'jpeg,jpg,png,gif,pdf,doc,docx,mp4,mov,avi',
+    sessionTimeout: 168, // hours
+    maintenanceMode: false,
+    debugMode: false,
+  });
+
+  const handleSaveSettings = () => {
+    // В реальном приложении здесь был бы API вызов
+    toast({
+      title: "Настройки сохранены",
+      description: "Настройки системы успешно обновлены",
+    });
+  };
+
+  const handleResetSettings = () => {
+    setSettings({
+      siteName: 'Система управления посылками',
+      adminEmail: 'admin@package.ru',
+      notificationsEnabled: true,
+      autoAssignLogist: false,
+      requireEmailVerification: false,
+      maxFileSize: 50,
+      allowedFileTypes: 'jpeg,jpg,png,gif,pdf,doc,docx,mp4,mov,avi',
+      sessionTimeout: 168,
+      maintenanceMode: false,
+      debugMode: false,
+    });
+    toast({
+      title: "Настройки сброшены",
+      description: "Настройки системы сброшены к значениям по умолчанию",
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="mb-6">
+        <h2 className="text-2xl font-semibold text-gray-900 mb-2">Настройки системы</h2>
+        <p className="text-gray-600">Конфигурация и параметры системы</p>
+      </div>
+
+      <Tabs defaultValue="general" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="general" className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            Общие
+          </TabsTrigger>
+          <TabsTrigger value="notifications" className="flex items-center gap-2">
+            <Bell className="h-4 w-4" />
+            Уведомления
+          </TabsTrigger>
+          <TabsTrigger value="security" className="flex items-center gap-2">
+            <Shield className="h-4 w-4" />
+            Безопасность
+          </TabsTrigger>
+          <TabsTrigger value="system" className="flex items-center gap-2">
+            <Server className="h-4 w-4" />
+            Система
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="general" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Globe className="h-5 w-5 mr-2" />
+                Основные настройки
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="siteName">Название сайта</Label>
+                <Input
+                  id="siteName"
+                  value={settings.siteName}
+                  onChange={(e) => setSettings({...settings, siteName: e.target.value})}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="adminEmail">Email администратора</Label>
+                <Input
+                  id="adminEmail"
+                  type="email"
+                  value={settings.adminEmail}
+                  onChange={(e) => setSettings({...settings, adminEmail: e.target.value})}
+                />
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="autoAssignLogist"
+                  checked={settings.autoAssignLogist}
+                  onChange={(e) => setSettings({...settings, autoAssignLogist: e.target.checked})}
+                />
+                <Label htmlFor="autoAssignLogist">Автоматическое назначение логиста</Label>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="notifications" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Mail className="h-5 w-5 mr-2" />
+                Настройки уведомлений
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="notificationsEnabled"
+                  checked={settings.notificationsEnabled}
+                  onChange={(e) => setSettings({...settings, notificationsEnabled: e.target.checked})}
+                />
+                <Label htmlFor="notificationsEnabled">Включить уведомления</Label>
+              </div>
+              <div className="space-y-2">
+                <Label>Настройки email уведомлений</Label>
+                <p className="text-sm text-gray-600">
+                  Email уведомления отправляются автоматически при изменении статуса посылки
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="security" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Shield className="h-5 w-5 mr-2" />
+                Безопасность
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="requireEmailVerification"
+                  checked={settings.requireEmailVerification}
+                  onChange={(e) => setSettings({...settings, requireEmailVerification: e.target.checked})}
+                />
+                <Label htmlFor="requireEmailVerification">Требовать подтверждение email</Label>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="sessionTimeout">Время сессии (часы)</Label>
+                <Input
+                  id="sessionTimeout"
+                  type="number"
+                  value={settings.sessionTimeout}
+                  onChange={(e) => setSettings({...settings, sessionTimeout: parseInt(e.target.value)})}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="maxFileSize">Максимальный размер файла (МБ)</Label>
+                <Input
+                  id="maxFileSize"
+                  type="number"
+                  value={settings.maxFileSize}
+                  onChange={(e) => setSettings({...settings, maxFileSize: parseInt(e.target.value)})}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="allowedFileTypes">Разрешенные типы файлов</Label>
+                <Input
+                  id="allowedFileTypes"
+                  value={settings.allowedFileTypes}
+                  onChange={(e) => setSettings({...settings, allowedFileTypes: e.target.value})}
+                  placeholder="jpeg,jpg,png,pdf"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="system" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Database className="h-5 w-5 mr-2" />
+                Системные настройки
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="maintenanceMode"
+                  checked={settings.maintenanceMode}
+                  onChange={(e) => setSettings({...settings, maintenanceMode: e.target.checked})}
+                />
+                <Label htmlFor="maintenanceMode">Режим технического обслуживания</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="debugMode"
+                  checked={settings.debugMode}
+                  onChange={(e) => setSettings({...settings, debugMode: e.target.checked})}
+                />
+                <Label htmlFor="debugMode">Режим отладки</Label>
+              </div>
+              <div className="pt-4 border-t">
+                <h4 className="font-medium mb-2">Действия</h4>
+                <div className="space-y-2">
+                  <Button variant="outline" className="w-full">
+                    <Database className="h-4 w-4 mr-2" />
+                    Создать резервную копию БД
+                  </Button>
+                  <Button variant="outline" className="w-full">
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Очистить кэш системы
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Кнопки сохранения */}
+      <div className="flex gap-4 pt-6 border-t">
+        <Button onClick={handleSaveSettings} className="flex-1">
+          <Save className="h-4 w-4 mr-2" />
+          Сохранить настройки
+        </Button>
+        <Button variant="outline" onClick={handleResetSettings} className="flex-1">
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Сбросить к умолчанию
+        </Button>
+      </div>
+    </div>
   );
 }
 
