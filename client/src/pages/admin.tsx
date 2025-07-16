@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Package, Users, Settings, BarChart3, Plus, Copy } from "lucide-react";
 import { usePackages, useUpdatePackageStatus } from "@/hooks/usePackages";
-import { useUsers, useUpdateUserRole, useToggleUserAccess, useLogists } from "@/hooks/useUsers";
+import { useUsers, useUpdateUserRole, useToggleUserAccess, useLogists, useUpdateUserCredentials, useDeleteUser } from "@/hooks/useUsers";
 import { Package as PackageType, User } from "@/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -375,6 +375,8 @@ function UserManagement() {
   const { data: logists, isLoading: logistsLoading } = useLogists();
   const updateUserRole = useUpdateUserRole();
   const toggleUserAccess = useToggleUserAccess();
+  const updateUserCredentials = useUpdateUserCredentials();
+  const deleteUser = useDeleteUser();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -395,6 +397,14 @@ function UserManagement() {
 
   const handleAccessToggle = (userId: string, currentAccess: boolean) => {
     toggleUserAccess.mutate({ userId, isActive: !currentAccess });
+  };
+
+  const handleUpdateCredentials = (userId: string, login: string, password: string) => {
+    updateUserCredentials.mutate({ userId, login, password });
+  };
+
+  const handleDeleteUser = (userId: string) => {
+    deleteUser.mutate(userId);
   };
 
   // Новая система создания пользователей
@@ -670,7 +680,7 @@ function UserManagement() {
                               checked={newUserData.supportsOffices}
                               onChange={(e) => setNewUserData({...newUserData, supportsOffices: e.target.checked})}
                             />
-                            <Label htmlFor="supportsOffices">Офисы</Label>
+                            <Label htmlFor="supportsOffices">Каунтеры</Label>
                           </div>
                         </div>
                       </div>
@@ -715,6 +725,8 @@ function UserManagement() {
               user={user}
               onRoleChange={handleRoleChange}
               onAccessToggle={handleAccessToggle}
+              onUpdateCredentials={handleUpdateCredentials}
+              onDeleteUser={handleDeleteUser}
             />
           ))}
         </div>
@@ -745,10 +757,12 @@ function UserManagement() {
   );
 }
 
-function UserCard({ user, onRoleChange, onAccessToggle }: {
+function UserCard({ user, onRoleChange, onAccessToggle, onUpdateCredentials, onDeleteUser }: {
   user: User;
   onRoleChange: (userId: string, role: string) => void;
   onAccessToggle: (userId: string, currentAccess: boolean) => void;
+  onUpdateCredentials: (userId: string, login: string, password: string) => void;
+  onDeleteUser: (userId: string) => void;
 }) {
   const getRoleColor = (role: string) => {
     switch (role) {
@@ -767,6 +781,29 @@ function UserCard({ user, onRoleChange, onAccessToggle }: {
       case 'logist': return 'Логист';
       case 'client': return 'Клиент';
       default: return role;
+    }
+  };
+
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editLogin, setEditLogin] = useState(user.login || '');
+  const [editPassword, setEditPassword] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const handleSaveCredentials = () => {
+    if (editLogin && editPassword) {
+      onUpdateCredentials(user.id, editLogin, editPassword);
+      setIsEditDialogOpen(false);
+      setEditPassword('');
+    }
+  };
+
+  const handleDeleteClick = () => {
+    if (confirmDelete) {
+      onDeleteUser(user.id);
+      setConfirmDelete(false);
+    } else {
+      setConfirmDelete(true);
+      setTimeout(() => setConfirmDelete(false), 3000);
     }
   };
 
@@ -803,29 +840,84 @@ function UserCard({ user, onRoleChange, onAccessToggle }: {
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div className="flex items-center gap-2">
-          <Select value={user.role} onValueChange={(value) => onRoleChange(user.id, value)}>
-            <SelectTrigger className="flex-1">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="admin">Администратор</SelectItem>
-              <SelectItem value="manager">Менеджер</SelectItem>
-              <SelectItem value="logist">Логист</SelectItem>
-              <SelectItem value="client">Клиент</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onAccessToggle(user.id, user.isActive)}
-          >
-            {user.isActive ? (
-              <UserX className="h-4 w-4" />
-            ) : (
-              <UserCheck className="h-4 w-4" />
-            )}
-          </Button>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Select value={user.role} onValueChange={(value) => onRoleChange(user.id, value)}>
+              <SelectTrigger className="flex-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="admin">Администратор</SelectItem>
+                <SelectItem value="manager">Менеджер</SelectItem>
+                <SelectItem value="logist">Логист</SelectItem>
+                <SelectItem value="client">Клиент</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onAccessToggle(user.id, user.isActive)}
+            >
+              {user.isActive ? (
+                <UserX className="h-4 w-4" />
+              ) : (
+                <UserCheck className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="flex-1">
+                  <Edit className="h-4 w-4 mr-2" />
+                  Редактировать
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Редактировать пользователя</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="edit-login">Логин</Label>
+                    <Input
+                      id="edit-login"
+                      value={editLogin}
+                      onChange={(e) => setEditLogin(e.target.value)}
+                      placeholder="Новый логин"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-password">Пароль</Label>
+                    <Input
+                      id="edit-password"
+                      type="password"
+                      value={editPassword}
+                      onChange={(e) => setEditPassword(e.target.value)}
+                      placeholder="Новый пароль"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button onClick={handleSaveCredentials} disabled={!editLogin || !editPassword}>
+                      Сохранить
+                    </Button>
+                    <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                      Отмена
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+            
+            <Button
+              variant={confirmDelete ? "destructive" : "outline"}
+              size="sm"
+              onClick={handleDeleteClick}
+            >
+              {confirmDelete ? "Подтвердить удаление" : "Удалить"}
+            </Button>
+          </div>
         </div>
         <div className="text-xs text-gray-500">
           Создан: {new Date(user.createdAt).toLocaleDateString()}
@@ -874,7 +966,7 @@ function LogistCard({ logist }: { logist: any }) {
             <Badge variant="secondary">Локеры</Badge>
           )}
           {logist.supportsOffices && (
-            <Badge variant="secondary">Офисы</Badge>
+            <Badge variant="secondary">Каунтеры</Badge>
           )}
         </div>
       </CardContent>

@@ -31,6 +31,8 @@ export interface IStorage {
   getUsersByRole(role: string): Promise<User[]>;
   updateUserRole(userId: string, role: string): Promise<void>;
   toggleUserAccess(userId: string, isActive: boolean): Promise<void>;
+  updateUserCredentials(userId: string, login?: string, password?: string): Promise<void>;
+  deleteUser(userId: string): Promise<void>;
 
   // Auth operations
   validateCredentials(email: string, password: string): Promise<User | null>;
@@ -166,6 +168,35 @@ export class DatabaseStorage implements IStorage {
     console.log('User access toggled successfully:', result);
   }
 
+  async updateUserCredentials(userId: string, login?: string, password?: string): Promise<void> {
+    const updateData: any = { updatedAt: new Date() };
+    if (login) updateData.login = login;
+    if (password) updateData.passwordHash = password; // Store as plain text as requested
+    
+    await db.update(users).set(updateData).where(eq(users.id, userId));
+  }
+
+  async deleteUser(userId: string): Promise<void> {
+    // First, check if user has any packages
+    const userPackages = await db.select().from(packages).where(eq(packages.clientId, userId));
+    
+    if (userPackages.length > 0) {
+      throw new Error('Невозможно удалить пользователя: у него есть посылки');
+    }
+    
+    // Delete logist record if exists
+    await db.delete(logists).where(eq(logists.userId, userId));
+    
+    // Delete notifications
+    await db.delete(notifications).where(eq(notifications.userId, userId));
+    
+    // Delete messages
+    await db.delete(messages).where(eq(messages.senderId, userId));
+    
+    // Finally delete user
+    await db.delete(users).where(eq(users.id, userId));
+  }
+
   // Logist operations
   async getLogists(): Promise<(Logist & { user: User })[]> {
     const logistsList = await db.select().from(logists);
@@ -271,15 +302,23 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createPackage(packageData: InsertPackage): Promise<Package> {
-    // Generate unique package number
-    const uniqueNumber = `PKG-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+    // Get logist info for unique package number
+    const logist = await db.select().from(logists).where(eq(logists.id, packageData.logistId)).limit(1);
+    const logistUser = logist[0] ? await db.select().from(users).where(eq(users.id, logist[0].userId)).limit(1) : null;
+    
+    // Generate unique package number in format PP-111111 (logist initials + number)
+    const logistInitials = logistUser && logistUser[0] 
+      ? (logistUser[0].firstName?.substring(0, 1) || 'L') + (logistUser[0].lastName?.substring(0, 1) || 'L')
+      : 'LL';
+    
+    const packageNumber = Math.floor(100000 + Math.random() * 900000); // 6-digit number
+    const uniqueNumber = `${logistInitials.toUpperCase()}-${packageNumber}`;
+    
     const packageWithNumber = { ...packageData, uniqueNumber, status: 'created' as const };
 
     const [newPackage] = await db.insert(packages).values([packageWithNumber]).returning();
 
-    // Note: Single package created, no duplicate manager package needed
-
-    // Create notifications for manager and logist
+    // Create notifications ONLY for managers (not logists at this stage)
     try {
       const managerUsers = await this.getUsersByRole('manager');
       console.log('Found manager users:', managerUsers);
@@ -289,7 +328,7 @@ export class DatabaseStorage implements IStorage {
           await this.createNotification({
             userId: manager.id,
             title: 'Новая посылка от клиента',
-            message: `Клиент создал новую посылку ${uniqueNumber}`,
+            message: `Клиент создал новую посылку ${uniqueNumber}. Необходимо проверить данные и передать логисту.`,
             type: 'package_status',
             packageId: newPackage.id
           });
@@ -341,82 +380,139 @@ export class DatabaseStorage implements IStorage {
       throw new Error('Посылка не найдена');
     }
 
+    // Create notifications based on status change
+    await this.createStatusChangeNotifications(updatedPackage, status);
+
     console.log('Storage: package status updated successfully', updatedPackage);
     return updatedPackage;
   }
 
   // Helper function to create notifications for status changes
   private async createStatusChangeNotifications(pkg: Package, newStatus: string) {
-    const statusNotifications = {
-      'created_admin': {
-        logist: { title: 'Новая посылка', message: `Получена новая посылка ${pkg.uniqueNumber}` },
-      },
-      'sent_to_logist': {
-        logist: { title: 'Посылка передана', message: `Посылка ${pkg.uniqueNumber} передана вам` },
-      },
-      'package_received': {
-        admin: { title: 'Посылка получена', message: `Логист получил посылку ${pkg.uniqueNumber}` },
-      },
-      'logist_confirmed': {
-        client: { title: 'Посылка подтверждена', message: `Логист подтвердил получение посылки ${pkg.uniqueNumber}` },
-      },
-      'client_received': {
-        admin: { title: 'Клиент получил информацию', message: `Клиент получил информацию о посылке ${pkg.uniqueNumber}` },
-      },
-      'confirmed_by_client': {
-        admin: { title: 'Подтверждено клиентом', message: `Клиент подтвердил посылку ${pkg.uniqueNumber}` },
-      },
-      'awaiting_payment_client': {
-        client: { title: 'Ожидает оплаты', message: `Необходима оплата для посылки ${pkg.uniqueNumber}` },
-      },
-      'awaiting_shipping_logist': {
-        logist: { title: 'Готово к отправке', message: `Посылка ${pkg.uniqueNumber} готова к отправке` },
-      },
-      'sent_client': {
-        client: { title: 'Посылка отправлена', message: `Ваша посылка ${pkg.uniqueNumber} отправлена` },
-      },
-      'paid_logist': {
-        logist: { title: 'Оплата получена', message: `Оплата за посылку ${pkg.uniqueNumber} получена` },
-      }
-    };
+    try {
+      const packageData = await this.getPackageById(pkg.id);
+      if (!packageData) return;
 
-    const notification = statusNotifications[newStatus as keyof typeof statusNotifications];
-    if (notification) {
-      // Send to client
-      if ('client' in notification) {
-        await this.createNotification({
-          userId: pkg.clientId,
-          title: notification.client.title,
-          message: notification.client.message,
-          type: 'package_status',
-          packageId: pkg.id
-        });
-      }
+      // Get logist user for notifications
+      const logistUser = packageData.logist?.user;
 
-      // Send to logist
-      if ('logist' in notification) {
-        await this.createNotification({
-          userId: pkg.logistId.toString(),
-          title: notification.logist.title,
-          message: notification.logist.message,
-          type: 'package_status',
-          packageId: pkg.id
-        });
-      }
+      switch (newStatus) {
+        case 'sent_to_logist':
+          // Notify logist that package was sent to them
+          if (logistUser) {
+            await this.createNotification({
+              userId: logistUser.id,
+              title: 'Получена информация о посылке',
+              message: `Менеджер передал вам посылку ${pkg.uniqueNumber}. Необходимо подтвердить получение.`,
+              type: 'package_status',
+              packageId: pkg.id
+            });
+          }
+          break;
 
-      // Send to admin
-      if ('admin' in notification) {
-        const adminUsers = await this.getUsersByRole('admin');
-        for (const admin of adminUsers) {
+        case 'received_by_logist':
+          // Notify managers that logist received package
+          const managerUsers = await this.getUsersByRole('manager');
+          for (const manager of managerUsers) {
+            await this.createNotification({
+              userId: manager.id,
+              title: 'Посылка получена логистом',
+              message: `Логист получил посылку ${pkg.uniqueNumber}. Ожидает подтверждения.`,
+              type: 'package_status',
+              packageId: pkg.id
+            });
+          }
+          break;
+
+        case 'logist_confirmed':
+          // Notify managers that logist confirmed
+          const managers = await this.getUsersByRole('manager');
+          for (const manager of managers) {
+            await this.createNotification({
+              userId: manager.id,
+              title: 'Логист подтвердил получение',
+              message: `Логист подтвердил получение посылки ${pkg.uniqueNumber}. Необходимо отправить информацию клиенту.`,
+              type: 'package_status',
+              packageId: pkg.id
+            });
+          }
+          break;
+
+        case 'info_sent_to_client':
+          // Notify client that info was sent
           await this.createNotification({
-            userId: admin.id,
-            title: notification.admin.title,
-            message: notification.admin.message,
+            userId: packageData.client.id,
+            title: 'Информация о посылке получена',
+            message: `Получена информация о посылке ${pkg.uniqueNumber}. Необходимо подтвердить получение.`,
             type: 'package_status',
             packageId: pkg.id
           });
-        }
+          break;
+
+        case 'confirmed_by_client':
+          // Notify managers that client confirmed
+          const managersForClient = await this.getUsersByRole('manager');
+          for (const manager of managersForClient) {
+            await this.createNotification({
+              userId: manager.id,
+              title: 'Клиент подтвердил получение',
+              message: `Клиент подтвердил получение информации о посылке ${pkg.uniqueNumber}. Необходимо обработать оплату.`,
+              type: 'package_status',
+              packageId: pkg.id
+            });
+          }
+          break;
+
+        case 'awaiting_payment':
+          // Notify client about payment
+          await this.createNotification({
+            userId: packageData.client.id,
+            title: 'Ожидает оплаты',
+            message: `Необходима оплата за посылку ${pkg.uniqueNumber}.`,
+            type: 'package_status',
+            packageId: pkg.id
+          });
+          break;
+
+        case 'awaiting_shipping':
+          // Notify logist about shipping
+          if (logistUser) {
+            await this.createNotification({
+              userId: logistUser.id,
+              title: 'Готово к отправке',
+              message: `Посылка ${pkg.uniqueNumber} готова к отправке. Необходимо отправить посылку.`,
+              type: 'package_status',
+              packageId: pkg.id
+            });
+          }
+          break;
+
+        case 'shipped':
+          // Notify client about shipping
+          await this.createNotification({
+            userId: packageData.client.id,
+            title: 'Посылка отправлена',
+            message: `Ваша посылка ${pkg.uniqueNumber} отправлена логистом.`,
+            type: 'package_status',
+            packageId: pkg.id
+          });
+          break;
+
+        case 'paid':
+          // Notify logist about payment
+          if (logistUser) {
+            await this.createNotification({
+              userId: logistUser.id,
+              title: 'Оплата получена',
+              message: `Оплата за посылку ${pkg.uniqueNumber} получена.`,
+              type: 'package_status',
+              packageId: pkg.id
+            });
+          }
+          break;
       }
+    } catch (error) {
+      console.error('Error creating status change notifications:', error);
     }
   }
 

@@ -247,11 +247,11 @@ function LogistPackageCard({ package: pkg, onAction, onStatusUpdate }: {
               <div className="flex gap-2">
                 {needsReceiptConfirmation && (
                   <Button
-                    onClick={() => onAction(pkg.id, 'confirm_receipt')}
+                    onClick={() => onStatusUpdate(pkg.id, 'received_by_logist')}
                     className="flex-1"
                   >
-                    <Camera className="h-4 w-4 mr-2" />
-                    Подтвердить получение
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Посылка получена
                   </Button>
                 )}
                 {needsShippingConfirmation && (

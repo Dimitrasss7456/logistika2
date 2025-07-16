@@ -148,6 +148,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put('/api/users/:id/credentials', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = req.user;
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Доступ запрещен" });
+      }
+
+      const { login, password } = req.body;
+      await storage.updateUserCredentials(req.params.id, login, password);
+      res.json({ message: "Данные пользователя обновлены" });
+    } catch (error) {
+      console.error("Error updating user credentials:", error);
+      res.status(500).json({ message: "Ошибка обновления данных пользователя" });
+    }
+  });
+
+  app.delete('/api/users/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = req.user;
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Доступ запрещен" });
+      }
+
+      await storage.deleteUser(req.params.id);
+      res.json({ message: "Пользователь удален" });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ message: error.message || "Ошибка удаления пользователя" });
+    }
+  });
+
   // Logist routes
   app.get('/api/logists', isAuthenticated, async (req: any, res) => {
     try {

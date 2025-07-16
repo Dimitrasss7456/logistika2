@@ -137,3 +137,54 @@ export function useUpdateLogist() {
     },
   });
 }
+
+export function useUpdateUserCredentials() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: ({ userId, login, password }: { userId: string; login?: string; password?: string }) => {
+      return apiRequest('PUT', `/api/users/${userId}/credentials`, { login, password });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+      toast({
+        title: 'Успех',
+        description: 'Данные пользователя успешно обновлены',
+      });
+    },
+    onError: (error: any) => {
+      console.error('Update user credentials error:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось обновить данные пользователя',
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
+export function useDeleteUser() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: (userId: string) => {
+      return apiRequest('DELETE', `/api/users/${userId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/logists'] });
+      toast({
+        title: 'Успех',
+        description: 'Пользователь удален',
+      });
+    },
+    onError: (error: any) => {
+      console.error('Delete user error:', error);
+      toast({
+        title: 'Ошибка',
+        description: error.message || 'Не удалось удалить пользователя',
+        variant: 'destructive',
+      });
+    },
+  });
+}

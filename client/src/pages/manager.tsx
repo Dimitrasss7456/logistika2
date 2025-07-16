@@ -379,15 +379,15 @@ function ManagerPackageCard({ package: pkg, onStatusUpdate, onEdit }: {
   const getRequiredAction = (status: string) => {
     switch (status) {
       case "created":
-        return { text: "Проверить информацию от клиента и отправить логисту", nextStatus: "sent_to_logist", color: "text-blue-600" };
+        return { text: "Проверить информацию от клиента и передать логисту", nextStatus: "sent_to_logist", color: "text-blue-600", auto: true };
       case "logist_confirmed":
-        return { text: "Проверить данные от логиста и отправить информацию клиенту", nextStatus: "info_sent_to_client", color: "text-green-600" };
+        return { text: "Проверить данные от логиста и отправить информацию клиенту", nextStatus: "info_sent_to_client", color: "text-green-600", auto: true };
       case "confirmed_by_client":
-        return { text: "Сформировать сумму для оплаты", nextStatus: "awaiting_payment", color: "text-orange-600" };
+        return { text: "Сформировать сумму для оплаты", nextStatus: "awaiting_payment", color: "text-orange-600", auto: false };
       case "awaiting_processing":
-        return { text: "Отправить файлы логисту", nextStatus: "awaiting_shipping", color: "text-pink-600" };
+        return { text: "Отправить файлы логисту", nextStatus: "awaiting_shipping", color: "text-pink-600", auto: true };
       case "shipped":
-        return { text: "Проверить и изменить статус клиенту", nextStatus: "paid", color: "text-emerald-600" };
+        return { text: "Проверить и изменить статус клиенту", nextStatus: "paid", color: "text-emerald-600", auto: false };
       default:
         return null;
     }
