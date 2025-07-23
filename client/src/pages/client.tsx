@@ -88,8 +88,8 @@ export default function Client() {
     }
   };
 
-  // Filter packages based on search and filters
-  const filteredPackages = packages?.filter((pkg: Package) => {
+  // Filter packages based on search and filters (locally since backend already filters by user)
+  const filteredPackages = packages.filter((pkg: Package) => {
     const matchesSearch = !searchTerm || 
       pkg.uniqueNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       pkg.itemName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -154,7 +154,7 @@ export default function Client() {
                 </div>
               ) : (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {logists?.map((logist: Logist) => (
+                  {logists.map((logist: Logist) => (
                     <Card key={logist.id} className="hover:shadow-lg transition-shadow">
                       <CardHeader>
                         <div className="flex items-center justify-between">
@@ -219,8 +219,10 @@ export default function Client() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Все статусы</SelectItem>
-                      {Object.entries(CLIENT_STATUSES).map(([key, label]) => (
-                        <SelectItem key={key} value={key}>{label}</SelectItem>
+                      {getStatusesForRole('client').map((status) => (
+                        <SelectItem key={status} value={status}>
+                          {getStatusDisplayName(status)}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -230,7 +232,7 @@ export default function Client() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Все адреса</SelectItem>
-                      {logists?.map((logist: Logist) => (
+                      {logists.map((logist: Logist) => (
                         <SelectItem key={logist.id} value={logist.location}>
                           {logist.location}
                         </SelectItem>
@@ -245,7 +247,7 @@ export default function Client() {
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
                   <p className="mt-4 text-gray-600">Загрузка посылок...</p>
                 </div>
-              ) : filteredPackages?.length === 0 ? (
+              ) : filteredPackages.length === 0 ? (
                 <div className="text-center py-12">
                   <Box className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">Посылок не найдено</h3>
@@ -253,13 +255,13 @@ export default function Client() {
                 </div>
               ) : (
                 <div className="grid gap-4">
-                  {filteredPackages?.map((pkg: Package) => (
+                  {filteredPackages.map((pkg: Package) => (
                     <Card key={pkg.id} className="hover:shadow-lg transition-shadow">
                       <CardHeader>
                         <div className="flex items-center justify-between">
                           <CardTitle className="text-lg">#{pkg.uniqueNumber}</CardTitle>
                           <Badge className={getStatusColor(pkg.status)}>
-                            {getStatusLabel(pkg.status, "client")}
+                            {getStatusDisplayName(pkg.status)}
                           </Badge>
                         </div>
                       </CardHeader>
@@ -303,10 +305,10 @@ export default function Client() {
                           </div>
                         </div>
                         
-                        {canUserInteractWithStatus(pkg.status, "client") && (
+                        {canClientInteract(pkg.status) && (
                           <div className="mt-4 pt-4 border-t">
                             <div className="flex gap-2">
-                              {pkg.status === "received_by_logist" && (
+                              {pkg.status === "received_by_logist_client" && (
                                 <Button
                                   onClick={() => handlePackageAction(pkg.id, "confirm")}
                                   className="flex-1"
@@ -314,7 +316,7 @@ export default function Client() {
                                   Подтвердить и загрузить файл
                                 </Button>
                               )}
-                              {pkg.status === "awaiting_payment" && (
+                              {pkg.status === "awaiting_payment_client" && (
                                 <Button
                                   onClick={() => handlePackageAction(pkg.id, "payment")}
                                   className="flex-1"

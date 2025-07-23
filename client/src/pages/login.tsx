@@ -243,16 +243,30 @@ export default function Login() {
               </div>
             </div>
 
-            <div className="mt-6 text-center">
+            <div className="mt-6 text-center space-y-2">
               <button
                 type="button"
-                onClick={handlePasswordReset}
+                onClick={() => {
+                  toast({
+                    title: "Восстановление пароля",
+                    description: "Свяжитесь с администратором в Telegram для восстановления пароля",
+                  });
+                }}
                 className="text-primary hover:text-primary-dark text-sm"
               >
                 Восстановить доступ
               </button>
-              <p className="text-xs text-gray-500 mt-2">
-                Запрос будет отправлен администратору
+              <div className="border-t pt-2">
+                <button
+                  type="button"
+                  onClick={() => navigate("/register")}
+                  className="text-primary hover:text-primary-dark text-sm font-medium"
+                >
+                  Нет аккаунта? Зарегистрироваться
+                </button>
+              </div>
+              <p className="text-xs text-gray-500">
+                Запрос на восстановление отправляется администратору
               </p>
             </div>
           </CardContent>
