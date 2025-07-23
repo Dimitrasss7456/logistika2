@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { Package, User, Logist, Notification, PackageStatus } from "@/types";
 import { getStatusDisplayName, canUserInteract, getStatusDescription } from "@/utils/statusUtils";
-import { Package as PackageIcon, Users, MapPin, Bell, Plus, Edit, Trash2, Eye, UserPlus, Send, Settings, Shield, AlertTriangle, CheckCircle, RefreshCw, FileText, DollarSign, Clock, Truck, User, Mail, MessageCircle } from "lucide-react";
+import { Package as PackageIcon, Users, MapPin, Bell, Plus, Edit, Trash2, Eye, UserPlus, Send, Settings, Shield, AlertTriangle, CheckCircle, RefreshCw, FileText, DollarSign, Clock, Truck, User as UserIcon, Mail, MessageCircle } from "lucide-react";
 
 export default function Admin() {
   const { toast } = useToast();
@@ -508,7 +508,7 @@ function AdminPackageCard({
               </div>
               
               <div className="flex items-center gap-2 text-sm text-gray-600">
-                <User className="w-4 h-4 text-gray-500" />
+                <UserIcon className="w-4 h-4 text-gray-500" />
                 <span>Клиент: {pkg.client?.firstName} {pkg.client?.lastName}</span>
               </div>
               
@@ -659,8 +659,8 @@ function AdminUserCard({
       case 'admin': return <Shield className="w-4 h-4" />;
       case 'manager': return <Settings className="w-4 h-4" />;
       case 'logist': return <Truck className="w-4 h-4" />;
-      case 'client': return <User className="w-4 h-4" />;
-      default: return <User className="w-4 h-4" />;
+      case 'client': return <UserIcon className="w-4 h-4" />;
+      default: return <UserIcon className="w-4 h-4" />;
     }
   };
 
