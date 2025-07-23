@@ -4,7 +4,7 @@ import { useNotifications, useUnreadNotificationsCount } from "@/hooks/useNotifi
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Bell, User, LogOut } from "lucide-react";
+import { Bell, User, LogOut, Home } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,11 +13,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import NotificationCenter from "@/components/notifications/notification-center";
+import { useLocation } from "wouter";
 
 export default function Header() {
   const { user } = useAuth();
   const unreadCount = useUnreadNotificationsCount();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [, setLocation] = useLocation();
 
   const handleLogout = async () => {
     try {
@@ -25,7 +27,7 @@ export default function Header() {
         method: 'POST',
         credentials: 'include',
       });
-      
+
       if (response.ok) {
         // Redirect to login page after successful logout
         window.location.href = "/";
@@ -64,12 +66,35 @@ export default function Header() {
                   </Badge>
                 )}
               </Button>
-              
+
               <NotificationCenter
                 open={notificationsOpen}
                 onOpenChange={setNotificationsOpen}
               />
             </div>
+
+            {/* Кнопка "Главная" для всех ролей */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                if (user?.role === 'admin') {
+                  setLocation('/admin');
+                } else if (user?.role === 'manager') {
+                  setLocation('/manager');
+                } else if (user?.role === 'logist') {
+                  setLocation('/logist');
+                } else if (user?.role === 'client') {
+                  setLocation('/client');
+                } else {
+                  setLocation('/home');
+                }
+              }}
+              className="text-sm"
+            >
+              <Home className="h-4 w-4 mr-2" />
+              Главная
+            </Button>
 
             {/* User Menu */}
             <DropdownMenu>

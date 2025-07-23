@@ -93,15 +93,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Final credentials:', { finalLogin, finalPassword });
 
       const userData = {
-        id: `${role}-${Date.now()}`,
+        id: `${role}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         email: email || `${finalLogin}@generated.local`,
         login: finalLogin,
         firstName,
         lastName,
-        telegramUsername,
+        telegramUsername: telegramUsername || null,
         role,
         passwordHash: finalPassword,
         isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
       console.log('User data to create:', userData);
@@ -154,15 +156,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Final credentials:', { finalLogin, finalPassword });
 
       const userData = {
-        id: `${role}-${Date.now()}`,
+        id: `${role}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         email: email || `${finalLogin}@generated.local`,
         login: finalLogin,
         firstName,
         lastName,
-        telegramUsername,
+        telegramUsername: telegramUsername || null,
         role,
         passwordHash: finalPassword,
         isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
       console.log('User data to create:', userData);

@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { Package, User, Logist, Notification, PackageStatus } from "@/types";
 import { getStatusDisplayName, canUserInteract, getStatusDescription } from "@/utils/statusUtils";
-import { Package as PackageIcon, Users, MapPin, Bell, Plus, Edit, Trash2, Eye, UserPlus, Send, Settings, Shield, AlertTriangle, CheckCircle, RefreshCw, FileText, DollarSign, Clock, Truck } from "lucide-react";
+import { Package as PackageIcon, Users, MapPin, Bell, Plus, Edit, Trash2, Eye, UserPlus, Send, Settings, Shield, AlertTriangle, CheckCircle, RefreshCw, FileText, DollarSign, Clock, Truck, User, Mail, MessageCircle } from "lucide-react";
 
 export default function Admin() {
   const { toast } = useToast();
@@ -219,47 +219,70 @@ export default function Admin() {
         </div>
 
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <Card>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <Card className="border-l-4 border-l-blue-500 hover:shadow-lg transition-shadow bg-gradient-to-r from-blue-50 to-white">
             <CardContent className="pt-6">
-              <div className="flex items-center">
-                <PackageIcon className="h-8 w-8 text-blue-600" />
-                <div className="ml-4">
+              <div className="flex items-center justify-between">
+                <div>
                   <p className="text-sm font-medium text-gray-600">Всего посылок</p>
-                  <p className="text-2xl font-bold">{packages.length}</p>
+                  <p className="text-3xl font-bold text-blue-700">{packages.length}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Активных: {packages.filter(p => !['paid_manager', 'shipped_client', 'completed', 'cancelled'].includes(p.status)).length}
+                  </p>
+                </div>
+                <div className="p-3 bg-blue-100 rounded-full">
+                  <PackageIcon className="h-8 w-8 text-blue-600" />
                 </div>
               </div>
             </CardContent>
           </Card>
-          <Card>
+          
+          <Card className="border-l-4 border-l-green-500 hover:shadow-lg transition-shadow bg-gradient-to-r from-green-50 to-white">
             <CardContent className="pt-6">
-              <div className="flex items-center">
-                <Users className="h-8 w-8 text-green-600" />
-                <div className="ml-4">
+              <div className="flex items-center justify-between">
+                <div>
                   <p className="text-sm font-medium text-gray-600">Пользователей</p>
-                  <p className="text-2xl font-bold">{users.length}</p>
+                  <p className="text-3xl font-bold text-green-700">{users.length}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Активных: {users.filter(u => u.isActive).length}
+                  </p>
+                </div>
+                <div className="p-3 bg-green-100 rounded-full">
+                  <Users className="h-8 w-8 text-green-600" />
                 </div>
               </div>
             </CardContent>
           </Card>
-          <Card>
+          
+          <Card className="border-l-4 border-l-purple-500 hover:shadow-lg transition-shadow bg-gradient-to-r from-purple-50 to-white">
             <CardContent className="pt-6">
-              <div className="flex items-center">
-                <MapPin className="h-8 w-8 text-purple-600" />
-                <div className="ml-4">
+              <div className="flex items-center justify-between">
+                <div>
                   <p className="text-sm font-medium text-gray-600">Логистов</p>
-                  <p className="text-2xl font-bold">{logists.length}</p>
+                  <p className="text-3xl font-bold text-purple-700">{logists.length}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Активных: {logists.filter(l => l.isActive).length}
+                  </p>
+                </div>
+                <div className="p-3 bg-purple-100 rounded-full">
+                  <MapPin className="h-8 w-8 text-purple-600" />
                 </div>
               </div>
             </CardContent>
           </Card>
-          <Card>
+          
+          <Card className="border-l-4 border-l-orange-500 hover:shadow-lg transition-shadow bg-gradient-to-r from-orange-50 to-white">
             <CardContent className="pt-6">
-              <div className="flex items-center">
-                <Bell className="h-8 w-8 text-orange-600" />
-                <div className="ml-4">
+              <div className="flex items-center justify-between">
+                <div>
                   <p className="text-sm font-medium text-gray-600">Уведомлений</p>
-                  <p className="text-2xl font-bold">{notifications.length}</p>
+                  <p className="text-3xl font-bold text-orange-700">{notifications.length}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Непрочитанных: {notifications.filter(n => !n.isRead).length}
+                  </p>
+                </div>
+                <div className="p-3 bg-orange-100 rounded-full">
+                  <Bell className="h-8 w-8 text-orange-600" />
                 </div>
               </div>
             </CardContent>
@@ -461,28 +484,52 @@ function AdminPackageCard({
   const actions = getNextActions(pkg.status);
 
   return (
-    <Card className="border-l-4 border-l-blue-500">
-      <CardHeader>
+    <Card className="border-l-4 border-l-blue-500 hover:shadow-lg transition-all duration-200 bg-gradient-to-r from-blue-50/30 to-white">
+      <CardHeader className="pb-3">
         <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              {pkg.uniqueNumber}
-              <Badge className={getStatusColor(pkg.status)}>
-                {getStatusDisplayName(pkg.status)}
-              </Badge>
+          <div className="flex-1">
+            <CardTitle className="flex items-center gap-3 text-lg">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <PackageIcon className="w-5 h-5 text-blue-600" />
+              </div>
+              <div>
+                <div className="font-bold text-gray-900">{pkg.uniqueNumber}</div>
+                <Badge className={`${getStatusColor(pkg.status)} text-xs`}>
+                  {getStatusDisplayName(pkg.status)}
+                </Badge>
+              </div>
             </CardTitle>
-            <p className="text-sm text-gray-600 mt-1">
-              {pkg.itemName} из {pkg.shopName}
-            </p>
-            <p className="text-sm text-gray-500">
-              Клиент: {pkg.client?.firstName} {pkg.client?.lastName}
-            </p>
+            
+            <div className="mt-3 space-y-1">
+              <div className="flex items-center gap-2 text-sm">
+                <FileText className="w-4 h-4 text-gray-500" />
+                <span className="font-medium">{pkg.itemName}</span>
+                <span className="text-gray-500">из {pkg.shopName}</span>
+              </div>
+              
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <User className="w-4 h-4 text-gray-500" />
+                <span>Клиент: {pkg.client?.firstName} {pkg.client?.lastName}</span>
+              </div>
+              
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <MapPin className="w-4 h-4 text-gray-500" />
+                <span>Логист: {pkg.logist?.user?.firstName} {pkg.logist?.user?.lastName}</span>
+              </div>
+              
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <Clock className="w-4 h-4" />
+                <span>Создана: {new Date(pkg.createdAt).toLocaleDateString()}</span>
+              </div>
+            </div>
           </div>
-          <div className="flex gap-2">
+          
+          <div className="flex gap-2 ml-4">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setShowDetails(!showDetails)}
+              className="hover:bg-blue-50"
             >
               <Eye className="w-4 h-4" />
             </Button>
@@ -490,13 +537,19 @@ function AdminPackageCard({
               variant="outline"
               size="sm"
               onClick={() => setShowActions(!showActions)}
+              className="hover:bg-green-50"
             >
               <Settings className="w-4 h-4" />
             </Button>
             <Button
               variant="destructive"
               size="sm"
-              onClick={() => onDelete(pkg.id)}
+              onClick={() => {
+                if (confirm(`Вы уверены, что хотите удалить посылку ${pkg.uniqueNumber}?`)) {
+                  onDelete(pkg.id);
+                }
+              }}
+              className="hover:bg-red-600"
             >
               <Trash2 className="w-4 h-4" />
             </Button>
@@ -591,58 +644,117 @@ function AdminUserCard({
   onToggleAccess: (data: { userId: string; isActive: boolean }) => void;
   onDelete: (userId: string) => void;
 }) {
+  const getRoleColor = (role: string) => {
+    switch (role) {
+      case 'admin': return 'bg-red-100 text-red-800 border-red-200';
+      case 'manager': return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'logist': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'client': return 'bg-green-100 text-green-800 border-green-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getRoleIcon = (role: string) => {
+    switch (role) {
+      case 'admin': return <Shield className="w-4 h-4" />;
+      case 'manager': return <Settings className="w-4 h-4" />;
+      case 'logist': return <Truck className="w-4 h-4" />;
+      case 'client': return <User className="w-4 h-4" />;
+      default: return <User className="w-4 h-4" />;
+    }
+  };
+
   return (
-    <Card>
-      <CardContent className="p-4">
+    <Card className={`hover:shadow-lg transition-all duration-200 border-l-4 ${
+      user.isActive ? 'border-l-green-500 bg-gradient-to-r from-green-50/30 to-white' : 'border-l-red-500 bg-gradient-to-r from-red-50/30 to-white'
+    }`}>
+      <CardContent className="p-6">
         <div className="flex justify-between items-start">
           <div className="flex-1">
-            <h3 className="font-semibold">{user.firstName} {user.lastName}</h3>
-            <p className="text-sm text-gray-600">@{user.login}</p>
-            <p className="text-sm text-gray-600">{user.email}</p>
-            {user.telegramUsername && (
-              <p className="text-sm text-gray-600">Telegram: {user.telegramUsername}</p>
-            )}
-            <p className="text-xs text-gray-500 mt-1">
-              Создан: {new Date(user.createdAt).toLocaleDateString()}
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="space-y-2">
-              <Select
-                value={user.role}
-                onValueChange={(value) => onUpdateRole({ userId: user.id, role: value })}
-              >
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="client">Клиент</SelectItem>
-                  <SelectItem value="logist">Логист</SelectItem>
-                  <SelectItem value="manager">Менеджер</SelectItem>
-                  <SelectItem value="admin">Админ</SelectItem>
-                </SelectContent>
-              </Select>
-              <div className="flex gap-2">
-                <Badge variant={user.isActive ? "default" : "destructive"}>
-                  {user.isActive ? "Активен" : "Заблокирован"}
-                </Badge>
+            <div className="flex items-center gap-3 mb-3">
+              <div className={`p-2 rounded-lg ${getRoleColor(user.role)}`}>
+                {getRoleIcon(user.role)}
+              </div>
+              <div>
+                <h3 className="font-bold text-lg text-gray-900">
+                  {user.firstName} {user.lastName}
+                </h3>
+                <p className="text-sm text-gray-500">@{user.login}</p>
               </div>
             </div>
-            <div className="flex flex-col gap-2">
-              <Button
-                variant={user.isActive ? "destructive" : "default"}
-                size="sm"
-                onClick={() => onToggleAccess({ userId: user.id, isActive: !user.isActive })}
-              >
-                {user.isActive ? "Блокировать" : "Разблокировать"}
-              </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => onDelete(user.id)}
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
+            
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <Mail className="w-4 h-4 text-gray-500" />
+                <span>{user.email}</span>
+              </div>
+              
+              {user.telegramUsername && (
+                <div className="flex items-center gap-2 text-sm">
+                  <MessageCircle className="w-4 h-4 text-gray-500" />
+                  <span>Telegram: {user.telegramUsername}</span>
+                </div>
+              )}
+              
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <Clock className="w-4 h-4" />
+                <span>Создан: {new Date(user.createdAt).toLocaleDateString()}</span>
+              </div>
+            </div>
+            
+            <div className="flex gap-2 mt-3">
+              <Badge className={getRoleColor(user.role)} variant="outline">
+                {user.role === 'admin' ? 'Администратор' : 
+                 user.role === 'manager' ? 'Менеджер' :
+                 user.role === 'logist' ? 'Логист' : 'Клиент'}
+              </Badge>
+              <Badge variant={user.isActive ? "default" : "destructive"}>
+                {user.isActive ? "Активен" : "Заблокирован"}
+              </Badge>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3 ml-4">
+            <div className="space-y-3">
+              <div>
+                <Label className="text-xs text-gray-500">Роль</Label>
+                <Select
+                  value={user.role}
+                  onValueChange={(value) => onUpdateRole({ userId: user.id, role: value })}
+                >
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="client">Клиент</SelectItem>
+                    <SelectItem value="logist">Логист</SelectItem>
+                    <SelectItem value="manager">Менеджер</SelectItem>
+                    <SelectItem value="admin">Администратор</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="flex gap-2">
+                <Button
+                  variant={user.isActive ? "destructive" : "default"}
+                  size="sm"
+                  onClick={() => onToggleAccess({ userId: user.id, isActive: !user.isActive })}
+                  className="flex-1"
+                >
+                  {user.isActive ? "Блокировать" : "Разблокировать"}
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => {
+                    if (confirm(`Вы уверены, что хотите удалить пользователя ${user.firstName} ${user.lastName}?`)) {
+                      onDelete(user.id);
+                    }
+                  }}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
