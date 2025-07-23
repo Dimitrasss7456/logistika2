@@ -329,7 +329,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Automatically create manager version of the package
       await storage.createPackage({
         ...packageData,
-        uniqueNumber: createdPackage.uniqueNumber, // Use same unique number
         status: 'created_manager',
       });
 
@@ -350,7 +349,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating package:", error);
       console.error("Request body:", req.body);
-      res.status(500).json({ message: "Ошибка создания посылки", error: error.message });
+      res.status(500).json({ 
+        message: "Ошибка создания посылки", 
+        error: error instanceof Error ? error.message : "Неизвестная ошибка"
+      });
     }
   });
 
@@ -760,7 +762,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Доступ запрещен" });
       }
 
-      await storage.deletePackage(parseInt(req.params.id));
+      const packageId = parseInt(req.params.id);
+      await storage.deletePackageById(packageId);
       res.json({ message: "Посылка удалена" });
     } catch (error) {
       console.error("Error deleting package:", error);
@@ -797,7 +800,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             userId: logist.userId,
             title: 'Новая посылка для обработки',
             message: `Вам передана посылка ${pkg.uniqueNumber} для обработки`,
-            type: 'package_assigned'
+            type: 'system'
           });
       }
 

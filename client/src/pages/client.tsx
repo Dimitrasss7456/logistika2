@@ -527,6 +527,8 @@ function CreatePackageDialog({ open, onOpenChange, logist }: {
               type="date"
               value={formData.estimatedDeliveryDate}
               onChange={(e) => setFormData({...formData, estimatedDeliveryDate: e.target.value})}
+              min={new Date().toISOString().split('T')[0]}
+              max="2030-12-31"
             />
           </div>
 
