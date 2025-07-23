@@ -188,13 +188,6 @@ export class DatabaseStorage implements IStorage {
     console.log('User access toggled successfully:', result);
   }
 
-  async updateUserCredentials(userId: string, login: string, password: string): Promise<void> {
-    await db
-      .update(users)
-      .set({ login, passwordHash: password, updatedAt: new Date() })
-      .where(eq(users.id, userId));
-  }
-
   async updateUserCredentials(userId: string, login?: string, password?: string): Promise<void> {
     const updateData: any = { updatedAt: new Date() };
     if (login) updateData.login = login;
@@ -640,16 +633,7 @@ export class DatabaseStorage implements IStorage {
     await db.delete(packageFiles).where(eq(packageFiles.id, id));
   }
 
-  async updateUserCredentials(userId: string, login: string, password: string): Promise<User[]> {
-    return await db.update(users)
-      .set({ login, passwordHash: password, updatedAt: new Date() })
-      .where(eq(users.id, userId))
-      .returning();
-  }
-
-  async getAllUsers(): Promise<User[]> {
-    return await db.select().from(users).orderBy(users.createdAt);
-  }
+  
 
   async getSystemAnalytics(): Promise<{
     packages: {

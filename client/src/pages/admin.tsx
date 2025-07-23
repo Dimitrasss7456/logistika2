@@ -405,27 +405,55 @@ function AdminPackageCard({
     const actions: { label: string; status: PackageStatus; variant?: "default" | "destructive" }[] = [];
     
     switch (status) {
+      case "created_client":
+        actions.push({ label: "Создать менеджерскую версию", status: "created_manager" });
+        break;
       case "created_manager":
         actions.push({ label: "Передать логисту", status: "sent_to_logist_manager" });
+        break;
+      case "sent_to_logist_manager":
+        actions.push({ label: "Логист подтвердил", status: "logist_confirmed_manager" });
         break;
       case "logist_confirmed_manager":
         actions.push({ label: "Отправить информацию клиенту", status: "info_sent_to_client_manager" });
         break;
+      case "info_sent_to_client_manager":
+        actions.push({ label: "Клиент подтвердил", status: "confirmed_by_client_manager" });
+        break;
       case "confirmed_by_client_manager":
-        actions.push({ label: "Отправить данные об оплате", status: "awaiting_payment_manager" });
+        actions.push({ label: "Ожидает оплаты", status: "awaiting_payment_manager" });
+        break;
+      case "awaiting_payment_manager":
+        actions.push({ label: "Оплата получена", status: "awaiting_processing_manager" });
         break;
       case "awaiting_processing_manager":
-        actions.push({ label: "Отправить на доставку", status: "awaiting_shipping_manager" });
+        actions.push({ label: "Готово к отправке", status: "awaiting_shipping_manager" });
+        break;
+      case "awaiting_shipping_manager":
+        actions.push({ label: "Отправлена логистом", status: "shipped_by_logist_manager" });
         break;
       case "shipped_by_logist_manager":
-        actions.push({ label: "Подтвердить доставку клиенту", status: "shipped_client" });
+        actions.push({ label: "Подтвердить доставку", status: "shipped_client" });
+        break;
+      case "received_info_logist":
+        actions.push({ label: "Посылка получена", status: "package_received_logist" });
+        break;
+      case "package_received_logist":
+        actions.push({ label: "Готово к отправке", status: "awaiting_shipping_logist" });
+        break;
+      case "awaiting_shipping_logist":
+        actions.push({ label: "Отправлена", status: "shipped_logist" });
+        break;
+      case "shipped_logist":
+        actions.push({ label: "Оплачена", status: "paid_logist" });
         break;
       default:
         break;
     }
 
-    // Manual override options for admin
-    actions.push({ label: "Отметить как оплаченную", status: "paid_manager", variant: "destructive" });
+    // Admin override options
+    actions.push({ label: "Отменить посылку", status: "cancelled", variant: "destructive" });
+    actions.push({ label: "Завершить обработку", status: "completed", variant: "destructive" });
 
     return actions;
   };

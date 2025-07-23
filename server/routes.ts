@@ -54,6 +54,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin-specific routes
+  app.get('/api/admin/users', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = req.user;
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Доступ запрещен" });
+      }
+
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching admin users:", error);
+      res.status(500).json({ message: "Ошибка получения пользователей" });
+    }
+  });
+
+  app.post('/api/admin/users', isAuthenticated, async (req: any, res) => {
+    console.log('=== POST /api/admin/users запрос получен ===');
+    console.log('Request body:', req.body);
+    console.log('Current user:', req.user);
+
+    try {
+      const currentUser = req.user;
+      if (currentUser?.role !== 'admin') {
+        console.log('Доступ запрещен для пользователя:', currentUser?.role);
+        return res.status(403).json({ message: "Доступ запрещен" });
+      }
+
+      const { firstName, lastName, email, role, telegramUsername, login, password, location, address, supportsLockers, supportsOffices } = req.body;
+
+      console.log('Creating user with data:', { firstName, lastName, email, role, telegramUsername, login, password, location, address, supportsLockers, supportsOffices });
+
+      // Use provided login and password
+      const finalLogin = login || `${role}_${Date.now()}`;
+      const finalPassword = password || "123456";
+
+      console.log('Final credentials:', { finalLogin, finalPassword });
+
+      const userData = {
+        id: `${role}-${Date.now()}`,
+        email: email || `${finalLogin}@generated.local`,
+        login: finalLogin,
+        firstName,
+        lastName,
+        telegramUsername,
+        role,
+        passwordHash: finalPassword,
+        isActive: true,
+      };
+
+      console.log('User data to create:', userData);
+
+      const newUser = await storage.createUser(userData);
+
+      // If creating a logist, also create logist record
+      if (role === 'logist') {
+        await storage.createLogist({
+          userId: newUser.id,
+          location: req.body.location || 'Не указано',
+          address: req.body.address || 'Не указано',
+          supportsLockers: req.body.supportsLockers || false,
+          supportsOffices: req.body.supportsOffices || false,
+          isActive: true,
+        });
+      }
+
+      res.json({ 
+        user: newUser, 
+        credentials: { login: finalLogin, password: finalPassword },
+        message: "Пользователь создан успешно" 
+      });
+    } catch (error) {
+      console.error("Error creating user:", error);
+      res.status(500).json({ message: "Ошибка создания пользователя" });
+    }
+  });
+
   app.post('/api/users', isAuthenticated, async (req: any, res) => {
     console.log('=== POST /api/users запрос получен ===');
     console.log('Request body:', req.body);
@@ -844,6 +921,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post('/api/notifications', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = req.user;
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Доступ запрещен" });
+      }
+
+      const { recipients, title, message, type } = req.body;
+
+      let targetUsers: any[] = [];
+
+      if (recipients === 'all') {
+        targetUsers = await storage.getAllUsers();
+      } else if (recipients === 'clients') {
+        targetUsers = await storage.getUsersByRole('client');
+      } else if (recipients === 'logists') {
+        targetUsers = await storage.getUsersByRole('logist');
+      } else if (recipients === 'managers') {
+        targetUsers = await storage.getUsersByRole('manager');
+      } else {
+        targetUsers = await storage.getUsersByRole(recipients);
+      }
+
+      console.log('Sending notification to users:', targetUsers.length);
+
+      // Create notifications for all target users
+      for (const user of targetUsers) {
+        await storage.createNotification({
+          userId: user.id,
+          title,
+          message,
+          type: type || 'system',
+        });
+      }
+
+      res.json({ message: `Уведомление отправлено ${targetUsers.length} пользователям` });
+    } catch (error) {
+      console.error("Error sending notification:", error);
+      res.status(500).json({ message: "Ошибка отправки уведомления" });
+    }
+  });
+
   app.post('/api/admin/notifications', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = req.user;
@@ -857,9 +976,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (recipients === 'all') {
         targetUsers = await storage.getAllUsers();
+      } else if (recipients === 'clients') {
+        targetUsers = await storage.getUsersByRole('client');
+      } else if (recipients === 'logists') {
+        targetUsers = await storage.getUsersByRole('logist');
+      } else if (recipients === 'managers') {
+        targetUsers = await storage.getUsersByRole('manager');
       } else {
-        targetUsers = await storage.getUsersByRole(recipients.replace('s', '')); // clients -> client
+        targetUsers = await storage.getUsersByRole(recipients);
       }
+
+      console.log('Sending notification to users:', targetUsers.length);
 
       // Create notifications for all target users
       for (const user of targetUsers) {
@@ -938,13 +1065,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const packages = await storage.getPackages({});
       const users = await storage.getAllUsers();
       const logists = await storage.getLogists();
-      const notifications = await storage.getNotifications('admin-001'); // Get system notifications
+      const notifications = await storage.getNotifications(currentUser.id);
 
       const systemStatus = {
         health: 'healthy',
         uptime: process.uptime(),
         totalPackages: packages.length,
-        activePackages: packages.filter((p: any) => !['paid_manager', 'shipped_client'].includes(p.status)).length,
+        activePackages: packages.filter((p: any) => !['paid_manager', 'shipped_client', 'completed', 'cancelled'].includes(p.status)).length,
         totalUsers: users.length,
         activeUsers: users.filter((u: any) => u.isActive).length,
         totalLogists: logists.length,
@@ -957,6 +1084,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching system status:", error);
       res.status(500).json({ message: "Ошибка получения статуса системы" });
+    }
+  });
+
+  // Admin route to manually create packages
+  app.post('/api/admin/packages', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = req.user;
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Доступ запрещен" });
+      }
+
+      const packageData = {
+        ...req.body,
+        status: req.body.status || 'created_manager'
+      };
+
+      const createdPackage = await storage.createPackage(packageData);
+      res.json(createdPackage);
+    } catch (error) {
+      console.error("Error creating admin package:", error);
+      res.status(500).json({ message: "Ошибка создания посылки администратором" });
+    }
+  });
+
+  // Admin route to reassign packages
+  app.patch('/api/admin/packages/:id/reassign', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = req.user;
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Доступ запрещен" });
+      }
+
+      const { newLogistId, newClientId } = req.body;
+      const packageId = parseInt(req.params.id);
+
+      const updatedPackage = await storage.reassignPackage(packageId, newLogistId, newClientId);
+      res.json(updatedPackage);
+    } catch (error) {
+      console.error("Error reassigning package:", error);
+      res.status(500).json({ message: "Ошибка переназначения посылки" });
+    }
+  });
+
+  // Admin route to bulk update packages
+  app.patch('/api/admin/packages/bulk', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = req.user;
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Доступ запрещен" });
+      }
+
+      const { packageIds, status, adminComments } = req.body;
+
+      const results = [];
+      for (const packageId of packageIds) {
+        const updatedPackage = await storage.updatePackageStatus(packageId, status, adminComments);
+        results.push(updatedPackage);
+      }
+
+      res.json({ message: `Обновлено ${results.length} посылок`, packages: results });
+    } catch (error) {
+      console.error("Error bulk updating packages:", error);
+      res.status(500).json({ message: "Ошибка массового обновления посылок" });
     }
   });
 
