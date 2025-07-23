@@ -318,7 +318,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         itemName: req.body.itemName,
         shopName: req.body.shopName,
         comments: req.body.comments || null,
-        status: 'created_client',
+        status: 'created',
         adminComments: null,
         paymentAmount: null,
         paymentDetails: null,
@@ -327,15 +327,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const createdPackage = await storage.createPackage(packageData);
 
       // Уведомить менеджеров о новой посылке
+      console.log('Found manager users:', await storage.getUsersByRole('manager'));
+      console.log('Found admin users:', await storage.getUsersByRole('admin'));
+      
       const managers = await storage.getUsersByRole('admin');
-      const managerIds = managers.map(m => m.id);
-
-      await storage.createNotification({
-        userIds: managerIds,
-        title: 'Новая посылка',
-        message: `Создана новая посылка ${createdPackage.uniqueNumber} от клиента ${currentUser.firstName} ${currentUser.lastName}`,
-        type: 'package_created'
-      });
+      
+      for (const manager of managers) {
+        console.log('Creating notification for admin:', manager.id);
+        await storage.createNotification({
+          userId: manager.id,
+          title: 'Новая посылка',
+          message: `Создана новая посылка ${createdPackage.uniqueNumber} от клиента ${currentUser.firstName} ${currentUser.lastName}`,
+          type: 'system',
+          packageId: createdPackage.id,
+        });
+      }
 
       res.json(createdPackage);
     } catch (error) {
