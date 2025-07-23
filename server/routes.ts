@@ -334,7 +334,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Уведомить менеджеров о новой посылке
       const managers = await storage.getUsersByRole('admin');
-      
+
       for (const manager of managers) {
         await storage.createNotification({
           userId: manager.id,
@@ -365,7 +365,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const currentUser = req.user;
       console.log('Current user role:', currentUser?.role);
-      
+
       // Allow logists to update status for their own packages
       if (currentUser?.role === 'logist') {
         const packageData = await storage.getPackageById(packageId);
@@ -408,7 +408,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             paymentAmount: packageData.paymentAmount,
             paymentDetails: packageData.paymentDetails,
           });
-          
+
           // Notify logist
           await storage.createNotification({
             userId: packageData.logist.userId,
@@ -418,7 +418,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             packageId: packageId,
           });
         }
-        
+
         // Notify relevant parties about status change
         await storage.createNotification({
           userId: packageData.clientId,
@@ -451,7 +451,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update client status
       const clientStatus = confirmed ? 'awaiting_processing_client' : 'awaiting_processing_client';
       const updatedPackage = await storage.updatePackageStatus(packageId, clientStatus);
-      
+
       // Create manager notification for confirmation
       const managers = await storage.getUsersByRole('admin');
       for (const manager of managers) {
@@ -463,7 +463,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           packageId: packageId,
         });
       }
-      
+
       res.json(updatedPackage);
     } catch (error) {
       console.error("Error confirming package:", error);
@@ -484,7 +484,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Update logist status to "received"
       const updatedPackage = await storage.updatePackageStatus(packageId, 'package_received_logist');
-      
+
       // Notify managers
       const managers = await storage.getUsersByRole('admin');
       for (const manager of managers) {
@@ -496,7 +496,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           packageId: packageId,
         });
       }
-      
+
       res.json(updatedPackage);
     } catch (error) {
       console.error("Error confirming package receipt:", error);
@@ -517,7 +517,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Update logist status to "shipped"
       const updatedPackage = await storage.updatePackageStatus(packageId, 'shipped_logist');
-      
+
       // Notify managers
       const managers = await storage.getUsersByRole('admin');
       for (const manager of managers) {
@@ -529,7 +529,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           packageId: packageId,
         });
       }
-      
+
       res.json(updatedPackage);
     } catch (error) {
       console.error("Error shipping package:", error);
@@ -550,7 +550,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Update client status to "awaiting shipping"
       const updatedPackage = await storage.updatePackageStatus(packageId, 'awaiting_shipping_client');
-      
+
       // Notify managers about payment
       const managers = await storage.getUsersByRole('admin');
       for (const manager of managers) {
@@ -562,7 +562,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           packageId: packageId,
         });
       }
-      
+
       res.json(updatedPackage);
     } catch (error) {
       console.error("Error processing payment:", error);
@@ -809,6 +809,154 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error sending package to logist:", error);
       res.status(500).json({ message: "Ошибка передачи посылки" });
+    }
+  });
+
+  // Admin routes for complete system management
+  app.get('/api/admin/packages', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = req.user;
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Доступ запрещен" });
+      }
+
+      const packages = await storage.getPackages({});
+      res.json(packages);
+    } catch (error) {
+      console.error("Error fetching admin packages:", error);
+      res.status(500).json({ message: "Ошибка получения посылок" });
+    }
+  });
+
+  app.delete('/api/admin/packages/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = req.user;
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Доступ запрещен" });
+      }
+
+      const packageId = parseInt(req.params.id);
+      await storage.deletePackageById(packageId);
+      res.json({ message: "Посылка удалена" });
+    } catch (error) {
+      console.error("Error deleting package:", error);
+      res.status(500).json({ message: "Ошибка удаления посылки" });
+    }
+  });
+
+  app.post('/api/admin/notifications', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = req.user;
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Доступ запрещен" });
+      }
+
+      const { recipients, title, message, type } = req.body;
+
+      let targetUsers: any[] = [];
+
+      if (recipients === 'all') {
+        targetUsers = await storage.getAllUsers();
+      } else {
+        targetUsers = await storage.getUsersByRole(recipients.replace('s', '')); // clients -> client
+      }
+
+      // Create notifications for all target users
+      for (const user of targetUsers) {
+        await storage.createNotification({
+          userId: user.id,
+          title,
+          message,
+          type: type || 'system',
+        });
+      }
+
+      res.json({ message: `Уведомление отправлено ${targetUsers.length} пользователям` });
+    } catch (error) {
+      console.error("Error sending notification:", error);
+      res.status(500).json({ message: "Ошибка отправки уведомления" });
+    }
+  });
+
+  app.get('/api/admin/analytics', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = req.user;
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Доступ запрещен" });
+      }
+
+      const packages = await storage.getPackages({});
+      const users = await storage.getAllUsers();
+      const logists = await storage.getLogists();
+
+      const analytics = {
+        totalPackages: packages.length,
+        totalUsers: users.length,
+        totalLogists: logists.length,
+        packagesByStatus: packages.reduce((acc: any, pkg: any) => {
+          acc[pkg.status] = (acc[pkg.status] || 0) + 1;
+          return acc;
+        }, {}),
+        usersByRole: users.reduce((acc: any, user: any) => {
+          acc[user.role] = (acc[user.role] || 0) + 1;
+          return acc;
+        }, {}),
+        activeUsers: users.filter((u: any) => u.isActive).length,
+        activeLogists: logists.filter((l: any) => l.isActive).length,
+      };
+
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching analytics:", error);
+      res.status(500).json({ message: "Ошибка получения аналитики" });
+    }
+  });
+
+  app.patch('/api/admin/users/:id/credentials', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = req.user;
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Доступ запрещен" });
+      }
+
+      const { login, password } = req.body;
+      await storage.updateUserCredentials(req.params.id, login, password);
+      res.json({ message: "Данные пользователя обновлены" });
+    } catch (error) {
+      console.error("Error updating user credentials:", error);
+      res.status(500).json({ message: "Ошибка обновления данных пользователя" });
+    }
+  });
+
+  app.get('/api/admin/system-status', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = req.user;
+      if (currentUser?.role !== 'admin') {
+        return res.status(403).json({ message: "Доступ запрещен" });
+      }
+
+      const packages = await storage.getPackages({});
+      const users = await storage.getAllUsers();
+      const logists = await storage.getLogists();
+      const notifications = await storage.getNotifications('admin-001'); // Get system notifications
+
+      const systemStatus = {
+        health: 'healthy',
+        uptime: process.uptime(),
+        totalPackages: packages.length,
+        activePackages: packages.filter((p: any) => !['paid_manager', 'shipped_client'].includes(p.status)).length,
+        totalUsers: users.length,
+        activeUsers: users.filter((u: any) => u.isActive).length,
+        totalLogists: logists.length,
+        activeLogists: logists.filter((l: any) => l.isActive).length,
+        unreadNotifications: notifications.filter((n: any) => !n.isRead).length,
+        lastActivity: new Date().toISOString(),
+      };
+
+      res.json(systemStatus);
+    } catch (error) {
+      console.error("Error fetching system status:", error);
+      res.status(500).json({ message: "Ошибка получения статуса системы" });
     }
   });
 

@@ -55,6 +55,7 @@ export interface IStorage {
   updatePackageStatus(id: number, status: string, adminComments?: string): Promise<Package>;
   updatePackage(id: number, updates: Partial<InsertPackage>): Promise<Package>;
   reassignPackage(id: number, newLogistId?: number, newClientId?: string): Promise<Package>;
+  deletePackageById(id: number): Promise<Package[]>;
 
   // Notification operations
   getNotifications(userId: string): Promise<Notification[]>;
@@ -70,6 +71,25 @@ export interface IStorage {
   getPackageFiles(packageId: number): Promise<PackageFile[]>;
   createPackageFile(file: Omit<PackageFile, 'id' | 'createdAt'>): Promise<PackageFile>;
   deletePackageFile(id: number): Promise<void>;
+
+  // Admin operations
+  updateUserCredentials(userId: string, login: string, password: string): Promise<User[]>;
+  getAllUsers(): Promise<User[]>;
+  getSystemAnalytics(): Promise<{
+    packages: {
+      total: number;
+      byStatus: { [key: string]: number };
+    };
+    users: {
+      total: number;
+      active: number;
+      byRole: { [key: string]: number };
+    };
+    logists: {
+      total: number;
+      active: number;
+    };
+  }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -179,27 +199,27 @@ export class DatabaseStorage implements IStorage {
     const updateData: any = { updatedAt: new Date() };
     if (login) updateData.login = login;
     if (password) updateData.passwordHash = password; // Store as plain text as requested
-    
+
     await db.update(users).set(updateData).where(eq(users.id, userId));
   }
 
   async deleteUser(userId: string): Promise<void> {
     // First, check if user has any packages
     const userPackages = await db.select().from(packages).where(eq(packages.clientId, userId));
-    
+
     if (userPackages.length > 0) {
       throw new Error('Невозможно удалить пользователя: у него есть посылки');
     }
-    
+
     // Delete logist record if exists
     await db.delete(logists).where(eq(logists.userId, userId));
-    
+
     // Delete notifications
     await db.delete(notifications).where(eq(notifications.userId, userId));
-    
+
     // Delete messages
     await db.delete(messages).where(eq(messages.senderId, userId));
-    
+
     // Finally delete user
     await db.delete(users).where(eq(users.id, userId));
   }
@@ -312,15 +332,15 @@ export class DatabaseStorage implements IStorage {
     // Get logist info for unique package number
     const logist = await db.select().from(logists).where(eq(logists.id, packageData.logistId)).limit(1);
     const logistUser = logist[0] ? await db.select().from(users).where(eq(users.id, logist[0].userId)).limit(1) : null;
-    
+
     // Generate unique package number in format PP-111111 (logist initials + number)
     const logistInitials = logistUser && logistUser[0] 
       ? (logistUser[0].firstName?.substring(0, 1) || 'L') + (logistUser[0].lastName?.substring(0, 1) || 'L')
       : 'LL';
-    
+
     const packageNumber = Math.floor(100000 + Math.random() * 900000); // 6-digit number
     const uniqueNumber = `${logistInitials.toUpperCase()}-${packageNumber}`;
-    
+
     const packageWithNumber = { ...packageData, uniqueNumber, status: 'created_client' as const };
 
     const [newPackage] = await db.insert(packages).values([packageWithNumber]).returning();
@@ -545,6 +565,9 @@ export class DatabaseStorage implements IStorage {
     return updatedPackage;
   }
 
+  async deletePackageById(id: number) {
+    return await db.delete(packages).where(eq(packages.id, id)).returning();
+  }
 
   // Notification operations
   async getNotifications(userId: string): Promise<Notification[]> {
@@ -615,6 +638,59 @@ export class DatabaseStorage implements IStorage {
 
   async deletePackageFile(id: number): Promise<void> {
     await db.delete(packageFiles).where(eq(packageFiles.id, id));
+  }
+
+  async updateUserCredentials(userId: string, login: string, password: string): Promise<User[]> {
+    return await db.update(users)
+      .set({ login, passwordHash: password, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(users.createdAt);
+  }
+
+  async getSystemAnalytics(): Promise<{
+    packages: {
+      total: number;
+      byStatus: { [key: string]: number };
+    };
+    users: {
+      total: number;
+      active: number;
+      byRole: { [key: string]: number };
+    };
+    logists: {
+      total: number;
+      active: number;
+    };
+  }> {
+    const allPackages = await this.getPackages({});
+    const allUsers = await this.getAllUsers();
+    const allLogists = await this.getLogists();
+
+    return {
+      packages: {
+        total: allPackages.length,
+        byStatus: allPackages.reduce((acc: any, pkg: any) => {
+          acc[pkg.status] = (acc[pkg.status] || 0) + 1;
+          return acc;
+        }, {}),
+      },
+      users: {
+        total: allUsers.length,
+        active: allUsers.filter((u: any) => u.isActive).length,
+        byRole: allUsers.reduce((acc: any, user: any) => {
+          acc[user.role] = (acc[user.role] || 0) + 1;
+          return acc;
+        }, {}),
+      },
+      logists: {
+        total: allLogists.length,
+        active: allLogists.filter((l: any) => l.isActive).length,
+      },
+    };
   }
 }
 
