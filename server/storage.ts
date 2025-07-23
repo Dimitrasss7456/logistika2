@@ -321,7 +321,7 @@ export class DatabaseStorage implements IStorage {
     const packageNumber = Math.floor(100000 + Math.random() * 900000); // 6-digit number
     const uniqueNumber = `${logistInitials.toUpperCase()}-${packageNumber}`;
     
-    const packageWithNumber = { ...packageData, uniqueNumber, status: 'created' as const };
+    const packageWithNumber = { ...packageData, uniqueNumber, status: 'created_client' as const };
 
     const [newPackage] = await db.insert(packages).values([packageWithNumber]).returning();
 
