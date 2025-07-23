@@ -17,7 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { getStatusLabel, getStatusColor, canUserInteractWithStatus, CLIENT_STATUSES } from "@/utils/statusUtils";
+import { getStatusDisplayName, getStatusColor, canClientInteract, getClientActions, getStatusesForRole } from "@/utils/statusUtils";
 import { useCreatePackage } from "@/hooks/usePackages";
 
 export default function Client() {
@@ -59,13 +59,13 @@ export default function Client() {
     }
   }, [user, setLocation]);
 
-  // Fetch logists and packages
-  const { data: logists, isLoading: logistsLoading } = useQuery({
+  // Fetch logists and packages  
+  const { data: logists = [], isLoading: logistsLoading } = useQuery({
     queryKey: ["/api/logists"],
     enabled: !!user,
   });
 
-  const { data: packages, isLoading: packagesLoading } = usePackages({
+  const { data: packages = [], isLoading: packagesLoading } = usePackages({
     clientId: user?.id,
     status: statusFilter && statusFilter !== "all" ? statusFilter : undefined,
     search: searchTerm || undefined,

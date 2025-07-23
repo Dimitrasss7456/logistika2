@@ -318,7 +318,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         itemName: req.body.itemName,
         shopName: req.body.shopName,
         comments: req.body.comments || null,
-        status: 'created',
+        status: 'created_client',
         adminComments: null,
         paymentAmount: null,
         paymentDetails: null,
@@ -326,14 +326,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const createdPackage = await storage.createPackage(packageData);
 
+      // Automatically create manager version of the package
+      await storage.createPackage({
+        ...packageData,
+        uniqueNumber: createdPackage.uniqueNumber, // Use same unique number
+        status: 'created_manager',
+      });
+
       // Уведомить менеджеров о новой посылке
-      console.log('Found manager users:', await storage.getUsersByRole('manager'));
-      console.log('Found admin users:', await storage.getUsersByRole('admin'));
-      
       const managers = await storage.getUsersByRole('admin');
       
       for (const manager of managers) {
-        console.log('Creating notification for admin:', manager.id);
         await storage.createNotification({
           userId: manager.id,
           title: 'Новая посылка',
@@ -359,7 +362,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Updating package status:', { packageId, status, adminComments });
 
       const currentUser = req.user;
-      if (currentUser?.role !== 'admin' && currentUser?.role !== 'manager') {
+      console.log('Current user role:', currentUser?.role);
+      
+      // Allow logists to update status for their own packages
+      if (currentUser?.role === 'logist') {
+        const packageData = await storage.getPackageById(packageId);
+        if (!packageData || packageData.logist.userId !== currentUser.id) {
+          return res.status(403).json({ message: "Доступ запрещен - не ваша посылка" });
+        }
+      } else if (currentUser?.role !== 'admin' && currentUser?.role !== 'manager') {
         return res.status(403).json({ message: "Доступ запрещен" });
       }
 
@@ -369,14 +380,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const updatedPackage = await storage.updatePackageStatus(packageId, status, adminComments);
 
-      // Create notification for client and logist
+      // Implement automatic status transitions according to ТЗ workflow
       const packageData = await storage.getPackageById(packageId);
       if (packageData) {
+        // Handle automatic transitions
+        if (status === 'sent_to_logist_manager') {
+          // Create logist version when manager sends to logist
+          await storage.createPackage({
+            uniqueNumber: packageData.uniqueNumber,
+            clientId: packageData.clientId,
+            logistId: packageData.logistId,
+            telegramUsername: packageData.telegramUsername,
+            recipientName: packageData.recipientName,
+            deliveryType: packageData.deliveryType,
+            lockerAddress: packageData.lockerAddress,
+            lockerCode: packageData.lockerCode,
+            courierService: packageData.courierService,
+            trackingNumber: packageData.trackingNumber,
+            estimatedDeliveryDate: packageData.estimatedDeliveryDate,
+            itemName: packageData.itemName,
+            shopName: packageData.shopName,
+            comments: packageData.comments,
+            status: 'received_info_logist',
+            adminComments: packageData.adminComments,
+            paymentAmount: packageData.paymentAmount,
+            paymentDetails: packageData.paymentDetails,
+          });
+          
+          // Notify logist
+          await storage.createNotification({
+            userId: packageData.logist.userId,
+            title: 'Новая посылка для получения',
+            message: `Получена информация о посылке ${packageData.uniqueNumber}`,
+            type: 'system',
+            packageId: packageId,
+          });
+        }
+        
+        // Notify relevant parties about status change
         await storage.createNotification({
           userId: packageData.clientId,
           title: 'Изменение статуса',
-          message: `Посылка #${packageData.uniqueNumber} изменила статус на "${status}"`,
-          type: 'package_status',
+          message: `Посылка #${packageData.uniqueNumber} изменила статус`,
+          type: 'system',
           packageId: packageId,
         });
       }
@@ -398,18 +444,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const packageId = parseInt(req.params.id);
-      const { confirmed } = req.body;
+      const { confirmed, fileUrl } = req.body;
 
-      const newStatus = confirmed ? 'confirmed_by_client' : 'awaiting_processing_client';
-      const updatedPackage = await storage.updatePackageStatus(packageId, newStatus);
+      // Update client status
+      const clientStatus = confirmed ? 'awaiting_processing_client' : 'awaiting_processing_client';
+      const updatedPackage = await storage.updatePackageStatus(packageId, clientStatus);
+      
+      // Create manager notification for confirmation
+      const managers = await storage.getUsersByRole('admin');
+      for (const manager of managers) {
+        await storage.createNotification({
+          userId: manager.id,
+          title: confirmed ? 'Клиент подтвердил посылку' : 'Клиент отклонил посылку',
+          message: `Посылка ${updatedPackage.uniqueNumber} ${confirmed ? 'подтверждена' : 'отклонена'} клиентом`,
+          type: 'system',
+          packageId: packageId,
+        });
+      }
+      
       res.json(updatedPackage);
     } catch (error) {
       console.error("Error confirming package:", error);
-      res.status(500).json({ message: "Ошибка подтверждения посылки" });
+      res.status(500).json({ message: "Ошибка подтверждения посылки", error: error.message });
     }
   });
 
-  app.post('/api/packages/:id/received', isAuthenticated, async (req: any, res) => {
+  // Logist confirms package receipt with proof
+  app.post('/api/packages/:id/logist-confirm', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = req.user;
       if (currentUser?.role !== 'logist') {
@@ -417,33 +478,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const packageId = parseInt(req.params.id);
-      const updatedPackage = await storage.updatePackageStatus(packageId, 'package_received');
+      const { proofUrl } = req.body;
+
+      // Update logist status to "received"
+      const updatedPackage = await storage.updatePackageStatus(packageId, 'package_received_logist');
+      
+      // Notify managers
+      const managers = await storage.getUsersByRole('admin');
+      for (const manager of managers) {
+        await storage.createNotification({
+          userId: manager.id,
+          title: 'Логист подтвердил получение',
+          message: `Логист подтвердил получение посылки ${updatedPackage.uniqueNumber}`,
+          type: 'system',
+          packageId: packageId,
+        });
+      }
+      
       res.json(updatedPackage);
     } catch (error) {
-      console.error("Error confirming package received:", error);
-      res.status(500).json({ message: "Ошибка подтверждения получения посылки" });
+      console.error("Error confirming package receipt:", error);
+      res.status(500).json({ message: "Ошибка подтверждения получения", error: error.message });
     }
   });
 
-  app.post('/api/packages/:id/payment', isAuthenticated, async (req: any, res) => {
+  // Logist ships package with proof
+  app.post('/api/packages/:id/ship', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = req.user;
-      const packageId = parseInt(req.params.id);
-      const { paymentDetails, paymentAmount } = req.body;
-
-      // Update package with payment info
-      await storage.updatePackage(packageId, { paymentDetails, paymentAmount });
-
-      let newStatus = 'awaiting_processing_admin';
-      if (currentUser?.role === 'client') {
-        newStatus = 'awaiting_processing_admin';
+      if (currentUser?.role !== 'logist') {
+        return res.status(403).json({ message: "Доступ запрещен" });
       }
 
-      const updatedPackage = await storage.updatePackageStatus(packageId, newStatus);
+      const packageId = parseInt(req.params.id);
+      const { proofUrl } = req.body;
+
+      // Update logist status to "shipped"
+      const updatedPackage = await storage.updatePackageStatus(packageId, 'shipped_logist');
+      
+      // Notify managers
+      const managers = await storage.getUsersByRole('admin');
+      for (const manager of managers) {
+        await storage.createNotification({
+          userId: manager.id,
+          title: 'Посылка отправлена логистом',
+          message: `Логист отправил посылку ${updatedPackage.uniqueNumber}`,
+          type: 'system',
+          packageId: packageId,
+        });
+      }
+      
+      res.json(updatedPackage);
+    } catch (error) {
+      console.error("Error shipping package:", error);
+      res.status(500).json({ message: "Ошибка отправки посылки", error: error.message });
+    }
+  });
+
+  // Client payment confirmation
+  app.post('/api/packages/:id/pay', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = req.user;
+      if (currentUser?.role !== 'client') {
+        return res.status(403).json({ message: "Доступ запрещен" });
+      }
+
+      const packageId = parseInt(req.params.id);
+      const { paymentProof, fileUrl } = req.body;
+
+      // Update client status to "awaiting shipping"
+      const updatedPackage = await storage.updatePackageStatus(packageId, 'awaiting_shipping_client');
+      
+      // Notify managers about payment
+      const managers = await storage.getUsersByRole('admin');
+      for (const manager of managers) {
+        await storage.createNotification({
+          userId: manager.id,
+          title: 'Клиент оплатил посылку',
+          message: `Получена оплата за посылку ${updatedPackage.uniqueNumber}`,
+          type: 'system',
+          packageId: packageId,
+        });
+      }
+      
       res.json(updatedPackage);
     } catch (error) {
       console.error("Error processing payment:", error);
-      res.status(500).json({ message: "Ошибка обработки платежа" });
+      res.status(500).json({ message: "Ошибка обработки оплаты", error: error.message });
     }
   });
 

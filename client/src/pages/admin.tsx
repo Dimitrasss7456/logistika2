@@ -52,7 +52,7 @@ export default function Admin() {
     }
   }, [user, setLocation]);
 
-  const { data: packages, isLoading: packagesLoading } = usePackages({
+  const { data: packages = [], isLoading: packagesLoading } = usePackages({
     status: statusFilter === "all" ? "" : statusFilter,
     search: searchTerm,
   });

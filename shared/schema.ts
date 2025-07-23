@@ -29,19 +29,34 @@ export const sessions = pgTable(
 // User roles enum
 export const userRoleEnum = pgEnum("user_role", ["admin", "manager", "logist", "client"]);
 
-// Package status enum - simplified version for universal use
+// Package status enum - according to ТЗ specification
 export const packageStatusEnum = pgEnum("package_status", [
-  "created", // Создана
-  "sent_to_logist", // Передана логисту
-  "received_by_logist", // Получена логистом
-  "logist_confirmed", // Логист подтвердил получение
-  "info_sent_to_client", // Передана информация клиенту
-  "confirmed_by_client", // Подтверждена клиентом
-  "awaiting_payment", // Ожидает оплаты
-  "awaiting_processing", // Ожидает обработки
-  "awaiting_shipping", // Ожидает отправки
-  "shipped", // Отправлена
-  "paid", // Оплачена
+  // Client statuses
+  "created_client", // Создана (клиент)
+  "received_by_logist_client", // Получена логистом (клиент)
+  "awaiting_processing_client", // Ожидает обработки (клиент)
+  "awaiting_payment_client", // Ожидает оплаты (клиент)
+  "awaiting_shipping_client", // Ожидает отправки (клиент)
+  "shipped_client", // Отправлена (клиент)
+  
+  // Logist statuses
+  "received_info_logist", // Получена информация о посылке (логист)
+  "package_received_logist", // Посылка получена (логист)
+  "awaiting_shipping_logist", // Ожидает отправки (логист)
+  "shipped_logist", // Отправлена (логист)
+  "paid_logist", // Оплачена (логист)
+  
+  // Manager/Admin statuses
+  "created_manager", // Создана (менеджер)
+  "sent_to_logist_manager", // Передана логисту (менеджер)
+  "logist_confirmed_manager", // Логист подтвердил получение (менеджер)
+  "info_sent_to_client_manager", // Передана информация клиенту (менеджер)
+  "confirmed_by_client_manager", // Подтверждена клиентом (менеджер)
+  "awaiting_payment_manager", // Ожидает оплаты (менеджер)
+  "awaiting_processing_manager", // Ожидает обработки (менеджер)
+  "awaiting_shipping_manager", // Ожидает отправки (менеджер)
+  "shipped_by_logist_manager", // Отправлена логистом (менеджер)
+  "paid_manager", // Оплачена (менеджер)
 ]);
 
 // Delivery type enum

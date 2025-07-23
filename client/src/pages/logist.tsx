@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Package, Upload, CheckCircle, Camera, FileText, Search, Eye } from "lucide-react";
 import { Package as PackageType } from "@/types";
-import { getStatusLabel, getStatusColor, canUserInteractWithStatus, LOGIST_STATUSES } from "@/utils/statusUtils";
+import { getStatusDisplayName, getStatusColor, canLogistInteract, getLogistActions, getStatusesForRole } from "@/utils/statusUtils";
 
 export default function Logist() {
   const { user } = useAuth();
@@ -49,8 +49,8 @@ export default function Logist() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  // Get packages for this logist
-  const { data: packages, isLoading: packagesLoading, error: packagesError } = usePackages({
+  // Get packages for this logist  
+  const { data: packages = [], isLoading: packagesLoading, error: packagesError } = usePackages({
     logistId: user?.id ? parseInt(user.id) : undefined,
     search: searchTerm || undefined,
   });

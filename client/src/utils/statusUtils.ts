@@ -1,223 +1,142 @@
-import { PackageStatus } from "@/types";
+// Status utilities for frontend - matching the ТЗ specification
 
-// Статусы для каждой роли согласно ТЗ
-export const CLIENT_STATUSES = {
-  created: "Создана",
-  received_by_logist: "Получена логистом", 
-  awaiting_processing: "Ожидает обработки",
-  awaiting_payment: "Ожидает оплаты",
-  awaiting_shipping: "Ожидает отправки",
-  shipped: "Отправлена"
-} as const;
-
-export const LOGIST_STATUSES = {
-  sent_to_logist: "Получена информация о посылке",
-  received_by_logist: "Посылка получена",
-  awaiting_shipping: "Ожидает отправки",
-  shipped: "Отправлена",
-  paid: "Оплачена"
-} as const;
-
-export const MANAGER_STATUSES = {
-  created: "Создана",
-  sent_to_logist: "Передана логисту",
-  logist_confirmed: "Логист подтвердил получение",
-  info_sent_to_client: "Передана информация клиенту",
-  confirmed_by_client: "Подтверждена клиентом",
-  awaiting_payment: "Ожидает оплаты",
-  awaiting_processing: "Ожидает обработки",
-  awaiting_shipping: "Ожидает отправки",
-  shipped: "Отправлена логистом",
-  paid: "Оплачена"
-} as const;
-
-export function getStatusLabel(status: PackageStatus, userRole: string): string {
-  switch (userRole) {
-    case "client":
-      return CLIENT_STATUSES[status as keyof typeof CLIENT_STATUSES] || status;
-    case "logist":
-      return LOGIST_STATUSES[status as keyof typeof LOGIST_STATUSES] || status;
-    case "manager":
-    case "admin":
-      return MANAGER_STATUSES[status as keyof typeof MANAGER_STATUSES] || status;
-    default:
-      return status;
-  }
+export function getStatusDisplayName(status: string): string {
+  const statusMap: Record<string, string> = {
+    // Client statuses
+    'created_client': 'Создана',
+    'received_by_logist_client': 'Получена логистом',
+    'awaiting_processing_client': 'Ожидает обработки',
+    'awaiting_payment_client': 'Ожидает оплаты',
+    'awaiting_shipping_client': 'Ожидает отправки',
+    'shipped_client': 'Отправлена',
+    
+    // Logist statuses
+    'received_info_logist': 'Получена информация о посылке',
+    'package_received_logist': 'Посылка получена',
+    'awaiting_shipping_logist': 'Ожидает отправки',
+    'shipped_logist': 'Отправлена',
+    'paid_logist': 'Оплачена',
+    
+    // Manager statuses
+    'created_manager': 'Создана',
+    'sent_to_logist_manager': 'Передана логисту',
+    'logist_confirmed_manager': 'Логист подтвердил получение',
+    'info_sent_to_client_manager': 'Передана информация клиенту',
+    'confirmed_by_client_manager': 'Подтверждена клиентом',
+    'awaiting_payment_manager': 'Ожидает оплаты',
+    'awaiting_processing_manager': 'Ожидает обработки',
+    'awaiting_shipping_manager': 'Ожидает отправки',
+    'shipped_by_logist_manager': 'Отправлена логистом',
+    'paid_manager': 'Оплачена',
+  };
+  
+  return statusMap[status] || status;
 }
 
-export function getVisibleStatusesForRole(userRole: string): PackageStatus[] {
-  switch (userRole) {
-    case "client":
-      return Object.keys(CLIENT_STATUSES) as PackageStatus[];
-    case "logist":
-      return Object.keys(LOGIST_STATUSES) as PackageStatus[];
-    case "manager":
-    case "admin":
-      return Object.keys(MANAGER_STATUSES) as PackageStatus[];
+export function getStatusColor(status: string): string {
+  if (status.includes('created')) return 'bg-blue-100 text-blue-800';
+  if (status.includes('awaiting')) return 'bg-yellow-100 text-yellow-800';
+  if (status.includes('shipped') || status.includes('paid')) return 'bg-green-100 text-green-800';
+  if (status.includes('confirmed')) return 'bg-purple-100 text-purple-800';
+  return 'bg-gray-100 text-gray-800';
+}
+
+export function canClientInteract(status: string): boolean {
+  return ['received_by_logist_client', 'awaiting_payment_client'].includes(status);
+}
+
+export function canLogistInteract(status: string): boolean {
+  return ['received_info_logist', 'awaiting_shipping_logist'].includes(status);
+}
+
+export function canManagerInteract(status: string): boolean {
+  return [
+    'created_manager',
+    'logist_confirmed_manager', 
+    'confirmed_by_client_manager',
+    'awaiting_processing_manager',
+    'shipped_by_logist_manager'
+  ].includes(status);
+}
+
+export function getClientActions(status: string): Array<{label: string, action: string, variant?: 'default' | 'destructive'}> {
+  switch (status) {
+    case 'received_by_logist_client':
+      return [
+        { label: 'Подтвердить', action: 'confirm' },
+        { label: 'Отклонить', action: 'reject', variant: 'destructive' }
+      ];
+    case 'awaiting_payment_client':
+      return [
+        { label: 'Оплатить', action: 'pay' }
+      ];
     default:
       return [];
   }
 }
 
-export function canUserInteractWithStatus(status: PackageStatus, userRole: string): boolean {
-  switch (userRole) {
-    case "client":
-      return status === "received_by_logist" || status === "awaiting_payment";
-    case "logist":
-      return status === "sent_to_logist" || status === "awaiting_shipping";
-    case "manager":
-    case "admin":
-      return [
-        "created",
-        "logist_confirmed", 
-        "confirmed_by_client",
-        "awaiting_processing",
-        "shipped"
-      ].includes(status);
-    default:
-      return false;
-  }
-}
-
-export function getStatusColor(status: PackageStatus): string {
+export function getLogistActions(status: string): Array<{label: string, action: string}> {
   switch (status) {
-    case "created":
-      return "bg-blue-100 text-blue-800";
-    case "sent_to_logist":
-      return "bg-purple-100 text-purple-800";
-    case "received_by_logist":
-      return "bg-orange-100 text-orange-800";
-    case "logist_confirmed":
-      return "bg-indigo-100 text-indigo-800";
-    case "info_sent_to_client":
-      return "bg-cyan-100 text-cyan-800";
-    case "confirmed_by_client":
-      return "bg-teal-100 text-teal-800";
-    case "awaiting_payment":
-      return "bg-yellow-100 text-yellow-800";
-    case "awaiting_processing":
-      return "bg-amber-100 text-amber-800";
-    case "awaiting_shipping":
-      return "bg-pink-100 text-pink-800";
-    case "shipped":
-      return "bg-green-100 text-green-800";
-    case "paid":
-      return "bg-emerald-100 text-emerald-800";
+    case 'received_info_logist':
+      return [{ label: 'Подтвердить получение', action: 'confirm_received' }];
+    case 'awaiting_shipping_logist':
+      return [{ label: 'Отправить', action: 'ship' }];
     default:
-      return "bg-gray-100 text-gray-800";
+      return [];
   }
 }
 
-export const getNextStatuses = (currentStatus: string): { value: string; label: string }[] => {
-  const statusFlow = {
-    created: [
-      { value: 'sent_to_logist', label: 'Передать логисту' }
-    ],
-    sent_to_logist: [
-      { value: 'logist_confirmed', label: 'Логист подтвердил' }
-    ],
-    logist_confirmed: [
-      { value: 'info_sent_to_client', label: 'Передать информацию клиенту' }
-    ],
-    info_sent_to_client: [
-      { value: 'confirmed_by_client', label: 'Клиент подтвердил' }
-    ],
-    confirmed_by_client: [
-      { value: 'awaiting_payment', label: 'Ожидает оплаты' }
-    ],
-    awaiting_payment: [
-      { value: 'awaiting_processing', label: 'В обработке' }
-    ],
-    awaiting_processing: [
-      { value: 'awaiting_shipping', label: 'Готов к отправке' }
-    ],
-    awaiting_shipping: [
-      { value: 'shipped', label: 'Отправлено' }
-    ],
-    shipped: [
-      { value: 'paid', label: 'Оплачено' }
-    ],
-    paid: []
-  };
+export function getManagerActions(status: string): Array<{label: string, action: string}> {
+  switch (status) {
+    case 'created_manager':
+      return [{ label: 'Передать логисту', action: 'send_to_logist' }];
+    case 'logist_confirmed_manager':
+      return [{ label: 'Отправить информацию клиенту', action: 'send_to_client' }];
+    case 'confirmed_by_client_manager':
+      return [{ label: 'Отправить данные об оплате', action: 'send_payment_info' }];
+    case 'awaiting_processing_manager':
+      return [{ label: 'Отправить на доставку', action: 'send_to_logist' }];
+    case 'shipped_by_logist_manager':
+      return [{ label: 'Подтвердить доставку клиенту', action: 'confirm_shipped' }];
+    default:
+      return [];
+  }
+}
 
-  return statusFlow[currentStatus] || [];
-};
-
-export const getStatusText = (status: string, userRole: string) => {
-  const statusTexts: Record<string, Record<string, string>> = {
-    created_client: {
-      client: "Создана",
-      admin: "Создана", 
-      manager: "Создана",
-      logist: "Создана"
-    },
-    created_manager: {
-      client: "Создана",
-      admin: "Создана", 
-      manager: "Создана",
-      logist: "Создана"
-    },
-    sent_to_logist: {
-      client: "Передана логисту",
-      admin: "Передана логисту",
-      manager: "Передана логисту", 
-      logist: "Получена информация о посылке"
-    },
-    received_by_logist: {
-      client: "Получена логистом",
-      admin: "Логист подтвердил получение",
-      manager: "Логист подтвердил получение",
-      logist: "Посылка получена"
-    },
-    info_sent_to_client: {
-      client: "Получена логистом",
-      admin: "Передана информация клиенту",
-      manager: "Передана информация клиенту",
-      logist: "Передана информация клиенту"
-    },
-    confirmed_by_client: {
-      client: "Ожидает обработки",
-      admin: "Подтверждена клиентом",
-      manager: "Подтверждена клиентом",
-      logist: "Подтверждена клиентом"
-    },
-    awaiting_payment: {
-      client: "Ожидает оплаты",
-      admin: "Ожидает оплаты",
-      manager: "Ожидает оплаты",
-      logist: "Ожидает оплаты"
-    },
-    awaiting_processing: {
-      client: "Ожидает отправки",
-      admin: "Ожидает обработки",
-      manager: "Ожидает обработки",
-      logist: "Ожидает обработки"
-    },
-    awaiting_shipping: {
-      client: "Ожидает отправки",
-      admin: "Ожидает отправки",
-      manager: "Ожидает отправки",
-      logist: "Ожидает отправки"
-    },
-    shipped_by_logist: {
-      client: "Отправлена",
-      admin: "Отправлена логистом",
-      manager: "Отправлена логистом",
-      logist: "Отправлена"
-    },
-    shipped_to_client: {
-      client: "Отправлена",
-      admin: "Отправлена",
-      manager: "Отправлена",
-      logist: "Отправлена"
-    },
-    paid: {
-      client: "Оплачена",
-      admin: "Оплачена",
-      manager: "Оплачена",
-      logist: "Оплачена"
-    }
-  };
-
-  return statusTexts[status]?.[userRole] || status;
-};
+export function getStatusesForRole(role: string): string[] {
+  switch (role) {
+    case 'client':
+      return [
+        'created_client',
+        'received_by_logist_client',
+        'awaiting_processing_client',
+        'awaiting_payment_client',
+        'awaiting_shipping_client',
+        'shipped_client'
+      ];
+    case 'logist':
+      return [
+        'received_info_logist',
+        'package_received_logist',
+        'awaiting_shipping_logist',
+        'shipped_logist',
+        'paid_logist'
+      ];
+    case 'admin':
+    case 'manager':
+      return [
+        'created_manager',
+        'sent_to_logist_manager',
+        'logist_confirmed_manager',
+        'info_sent_to_client_manager',
+        'confirmed_by_client_manager',
+        'awaiting_payment_manager',
+        'awaiting_processing_manager',
+        'awaiting_shipping_manager',
+        'shipped_by_logist_manager',
+        'paid_manager'
+      ];
+    default:
+      return [];
+  }
+}

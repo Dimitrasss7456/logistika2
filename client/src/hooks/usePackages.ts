@@ -3,7 +3,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { Package, PackageStatus } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 
-export function usePackages(filters?: { status?: string; search?: string; limit?: number }) {
+export function usePackages(filters?: { status?: string; search?: string; limit?: number; clientId?: string; logistId?: number }) {
   const queryKey = ['/api/packages'];
 
   // Build query string - only add parameters if they have meaningful values
@@ -16,6 +16,12 @@ export function usePackages(filters?: { status?: string; search?: string; limit?
   }
   if (filters?.limit && filters.limit > 0) {
     params.append('limit', filters.limit.toString());
+  }
+  if (filters?.clientId) {
+    params.append('clientId', filters.clientId);
+  }
+  if (filters?.logistId) {
+    params.append('logistId', filters.logistId.toString());
   }
 
   const queryString = params.toString();
