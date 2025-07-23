@@ -535,7 +535,7 @@ function AdminPackageCard({
             <Button
               variant="outline"
               size="sm"
-              onClick={()={() => setShowActions(!showActions)}
+              onClick={() => setShowActions(!showActions)}
               className="hover:bg-green-50"
             >
               <Settings className="w-4 h-4" />
