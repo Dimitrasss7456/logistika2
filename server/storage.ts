@@ -104,7 +104,7 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async createUser(user: UpsertUser): Promise<User> {
+  async createUser(userData: UpsertUser): Promise<User> {
     console.log('Storage: Creating user with data:', userData);
 
     // Generate proper ID if not provided
@@ -120,9 +120,9 @@ export class DatabaseStorage implements IStorage {
       isActive: userData.isActive !== undefined ? userData.isActive : true,
     };
 
-    const [user] = await db.insert(users).values([userToCreate]).returning();
-    console.log('Storage: User created successfully:', user);
-    return user;
+    const [newUser] = await db.insert(users).values([userToCreate]).returning();
+    console.log('Storage: User created successfully:', newUser);
+    return newUser;
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
