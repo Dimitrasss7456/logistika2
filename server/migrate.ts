@@ -103,15 +103,11 @@ async function createTables() {
     // Create sessions table for session storage
     await db.execute(sql`
       CREATE TABLE IF NOT EXISTS sessions (
-        sid VARCHAR NOT NULL COLLATE "default",
+        sid VARCHAR PRIMARY KEY NOT NULL COLLATE "default",
         sess JSON NOT NULL,
         expire TIMESTAMP(6) NOT NULL
       )
       WITH (OIDS=FALSE);
-    `);
-
-    await db.execute(sql`
-      ALTER TABLE sessions ADD CONSTRAINT sessions_pkey PRIMARY KEY (sid) NOT DEFERRABLE INITIALLY IMMEDIATE;
     `);
 
     // Create demo users
