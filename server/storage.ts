@@ -104,14 +104,14 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async createUser(userData: UpsertUser): Promise<User> {
+  async createUser(user: UpsertUser): Promise<User> {
     console.log('Storage: Creating user with data:', userData);
-    
+
     // Generate proper ID if not provided
     if (!userData.id) {
       userData.id = `${userData.role}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     }
-    
+
     // Ensure required fields are present
     const userToCreate = {
       ...userData,
@@ -119,7 +119,7 @@ export class DatabaseStorage implements IStorage {
       updatedAt: new Date(),
       isActive: userData.isActive !== undefined ? userData.isActive : true,
     };
-    
+
     const [user] = await db.insert(users).values([userToCreate]).returning();
     console.log('Storage: User created successfully:', user);
     return user;
@@ -647,7 +647,7 @@ export class DatabaseStorage implements IStorage {
     await db.delete(packageFiles).where(eq(packageFiles.id, id));
   }
 
-  
+
 
   async getSystemAnalytics(): Promise<{
     packages: {

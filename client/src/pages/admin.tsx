@@ -154,6 +154,26 @@ export default function Admin() {
     }
   });
 
+  // Update user credentials mutation
+  const updateUserCredentials = useMutation({
+    mutationFn: async ({ userId, login, password }: { userId: string; login: string; password: string }) => {
+      const response = await fetch(`/api/users/${userId}/credentials`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ login, password }),
+      });
+      if (!response.ok) throw new Error("Ошибка обновления данных");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({ title: "Данные обновлены", description: "Логин и пароль пользователя успешно изменены" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Ошибка", description: error.message, variant: "destructive" });
+    }
+  });
+
   // Send notification mutation
   const sendNotification = useMutation({
     mutationFn: async (notificationData: any) => {
@@ -365,6 +385,7 @@ export default function Admin() {
                   user={user} 
                   onUpdateRole={updateUserRole.mutate}
                   onToggleAccess={toggleUserAccess.mutate}
+                  onUpdateCredentials={updateUserCredentials.mutate}
                   onDelete={deleteUser.mutate}
                 />
               ))}
@@ -636,11 +657,13 @@ function AdminUserCard({
   user, 
   onUpdateRole, 
   onToggleAccess, 
+  onUpdateCredentials,
   onDelete 
 }: { 
   user: User; 
   onUpdateRole: (data: { userId: string; role: string }) => void;
   onToggleAccess: (data: { userId: string; isActive: boolean }) => void;
+  onUpdateCredentials: (data: { userId: string; login: string; password: string }) => void;
   onDelete: (userId: string) => void;
 }) {
   const getRoleColor = (role: string) => {
@@ -733,32 +756,117 @@ function AdminUserCard({
                 </Select>
               </div>
 
-              <div className="flex gap-2">
-                <Button
-                  variant={user.isActive ? "destructive" : "default"}
-                  size="sm"
-                  onClick={() => onToggleAccess({ userId: user.id, isActive: !user.isActive })}
-                  className="flex-1"
-                >
-                  {user.isActive ? "Блокировать" : "Разблокировать"}
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => {
-                    if (confirm(`Вы уверены, что хотите удалить пользователя ${user.firstName} ${user.lastName}?`)) {
-                      onDelete(user.id);
-                    }
-                  }}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+              <div className="space-y-2">
+                <UpdateCredentialsDialog
+                  userId={user.id}
+                  userName={`${user.firstName} ${user.lastName}`}
+                  onUpdateCredentials={onUpdateCredentials}
+                />
+                
+                <div className="flex gap-2">
+                  <Button
+                    variant={user.isActive ? "destructive" : "default"}
+                    size="sm"
+                    onClick={() => onToggleAccess({ userId: user.id, isActive: !user.isActive })}
+                    className="flex-1"
+                  >
+                    {user.isActive ? "Блокировать" : "Разблокировать"}
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => {
+                      if (confirm(`Вы уверены, что хотите удалить пользователя ${user.firstName} ${user.lastName}?`)) {
+                        onDelete(user.id);
+                      }
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+// Update User Credentials Dialog Component
+function UpdateCredentialsDialog({ 
+  userId, 
+  userName, 
+  onUpdateCredentials 
+}: { 
+  userId: string; 
+  userName: string; 
+  onUpdateCredentials: (data: { userId: string; login: string; password: string }) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    login: "",
+    password: ""
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onUpdateCredentials({
+      userId,
+      login: formData.login,
+      password: formData.password
+    });
+    setFormData({ login: "", password: "" });
+    setIsOpen(false);
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm">
+          <Edit className="w-4 h-4 mr-2" />
+          Изменить данные
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Изменение данных пользователя</DialogTitle>
+          <p className="text-sm text-gray-600">{userName}</p>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="new-login">Новый логин</Label>
+            <Input
+              id="new-login"
+              value={formData.login}
+              onChange={(e) => setFormData({...formData, login: e.target.value})}
+              placeholder="Введите новый логин"
+              required
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="new-password">Новый пароль</Label>
+            <Input
+              id="new-password"
+              type="password"
+              value={formData.password}
+              onChange={(e) => setFormData({...formData, password: e.target.value})}
+              placeholder="Введите новый пароль"
+              required
+            />
+          </div>
+
+          <div className="flex gap-2 pt-4">
+            <Button type="submit" className="flex-1">Обновить</Button>
+            <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
+              Отмена
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
