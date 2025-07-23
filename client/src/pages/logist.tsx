@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Package, Upload, CheckCircle, Camera, FileText, Search, Eye } from "lucide-react";
 import { Package as PackageType } from "@/types";
-import { getStatusDisplayName, getStatusColor, canLogistInteract, getLogistActions, getStatusesForRole } from "@/utils/statusUtils";
+import { getStatusDisplayName, getStatusColor, canLogistInteract, getLogistActions, getStatusesForRole, canUserInteract } from "@/utils/statusUtils";
 
 export default function Logist() {
   const { user } = useAuth();
@@ -173,9 +173,9 @@ function LogistPackageCard({ package: pkg, onAction, onStatusUpdate }: {
 }) {
   const [showDetails, setShowDetails] = useState(false);
 
-  const canInteract = canUserInteractWithStatus(pkg.status, "logist");
-  const needsReceiptConfirmation = pkg.status === "sent_to_logist";
-  const needsShippingConfirmation = pkg.status === "awaiting_shipping";
+  const canInteract = canUserInteract(pkg.status, "logist");
+  const needsReceiptConfirmation = pkg.status === "received_info_logist";
+  const needsShippingConfirmation = pkg.status === "awaiting_shipping_logist";
 
   return (
     <Card className="hover:shadow-lg transition-shadow">
@@ -184,7 +184,7 @@ function LogistPackageCard({ package: pkg, onAction, onStatusUpdate }: {
           <div className="flex items-center gap-3">
             <CardTitle className="text-lg">#{pkg.uniqueNumber}</CardTitle>
             <Badge className={getStatusColor(pkg.status)}>
-              {getStatusLabel(pkg.status, "logist")}
+              {getStatusDisplayName(pkg.status)}
             </Badge>
             {canInteract && (
               <Badge variant="outline">
@@ -247,7 +247,7 @@ function LogistPackageCard({ package: pkg, onAction, onStatusUpdate }: {
               <div className="flex gap-2">
                 {needsReceiptConfirmation && (
                   <Button
-                    onClick={() => onStatusUpdate(pkg.id, 'received_by_logist')}
+                    onClick={() => onStatusUpdate(pkg.id, 'package_received_logist')}
                     className="flex-1"
                   >
                     <CheckCircle className="h-4 w-4 mr-2" />
