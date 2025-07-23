@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { Package, User, Logist, Notification, PackageStatus } from "@/types";
 import { getStatusDisplayName, canUserInteract, getStatusDescription } from "@/utils/statusUtils";
-import { Package as PackageIcon, Users, MapPin, Bell, Plus, Edit, Trash2, Eye, UserPlus, Send, Settings, Shield, AlertTriangle, CheckCircle, RefreshCw, FileText, DollarSign, Clock, Truck, User as UserIcon, Mail, MessageCircle } from "lucide-react";
+import { Package as PackageIcon, Users, MapPin, Bell, Plus, Edit, Trash2, Eye, UserPlus, Send, Settings, Shield, AlertTriangle, CheckCircle, RefreshCw, FileText, DollarSign, Clock, Truck, User as UserIcon, Mail, MessageCircle, Home } from "lucide-react";
 
 export default function Admin() {
   const { toast } = useToast();
@@ -236,7 +235,7 @@ export default function Admin() {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card className="border-l-4 border-l-green-500 hover:shadow-lg transition-shadow bg-gradient-to-r from-green-50 to-white">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -253,7 +252,7 @@ export default function Admin() {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card className="border-l-4 border-l-purple-500 hover:shadow-lg transition-shadow bg-gradient-to-r from-purple-50 to-white">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -270,7 +269,7 @@ export default function Admin() {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card className="border-l-4 border-l-orange-500 hover:shadow-lg transition-shadow bg-gradient-to-r from-orange-50 to-white">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -426,7 +425,7 @@ function AdminPackageCard({
 
   const getNextActions = (status: PackageStatus) => {
     const actions: { label: string; status: PackageStatus; variant?: "default" | "destructive" }[] = [];
-    
+
     switch (status) {
       case "created_client":
         actions.push({ label: "Создать менеджерскую версию", status: "created_manager" });
@@ -499,31 +498,31 @@ function AdminPackageCard({
                 </Badge>
               </div>
             </CardTitle>
-            
+
             <div className="mt-3 space-y-1">
               <div className="flex items-center gap-2 text-sm">
                 <FileText className="w-4 h-4 text-gray-500" />
                 <span className="font-medium">{pkg.itemName}</span>
                 <span className="text-gray-500">из {pkg.shopName}</span>
               </div>
-              
+
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <UserIcon className="w-4 h-4 text-gray-500" />
                 <span>Клиент: {pkg.client?.firstName} {pkg.client?.lastName}</span>
               </div>
-              
+
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <MapPin className="w-4 h-4 text-gray-500" />
                 <span>Логист: {pkg.logist?.user?.firstName} {pkg.logist?.user?.lastName}</span>
               </div>
-              
+
               <div className="flex items-center gap-2 text-sm text-gray-500">
                 <Clock className="w-4 h-4" />
                 <span>Создана: {new Date(pkg.createdAt).toLocaleDateString()}</span>
               </div>
             </div>
           </div>
-          
+
           <div className="flex gap-2 ml-4">
             <Button
               variant="outline"
@@ -536,7 +535,7 @@ function AdminPackageCard({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setShowActions(!showActions)}
+              onClick={()={() => setShowActions(!showActions)}
               className="hover:bg-green-50"
             >
               <Settings className="w-4 h-4" />
@@ -556,7 +555,7 @@ function AdminPackageCard({
           </div>
         </div>
       </CardHeader>
-      
+
       {(showDetails || showActions) && (
         <CardContent className="space-y-4">
           {showDetails && (
@@ -604,7 +603,7 @@ function AdminPackageCard({
                   rows={2}
                 />
               </div>
-              
+
               <div className="flex gap-2 flex-wrap">
                 {actions.map((action) => (
                   <Button
@@ -682,26 +681,26 @@ function AdminUserCard({
                 <p className="text-sm text-gray-500">@{user.login}</p>
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm">
                 <Mail className="w-4 h-4 text-gray-500" />
                 <span>{user.email}</span>
               </div>
-              
+
               {user.telegramUsername && (
                 <div className="flex items-center gap-2 text-sm">
                   <MessageCircle className="w-4 h-4 text-gray-500" />
                   <span>Telegram: {user.telegramUsername}</span>
                 </div>
               )}
-              
+
               <div className="flex items-center gap-2 text-sm text-gray-500">
                 <Clock className="w-4 h-4" />
                 <span>Создан: {new Date(user.createdAt).toLocaleDateString()}</span>
               </div>
             </div>
-            
+
             <div className="flex gap-2 mt-3">
               <Badge className={getRoleColor(user.role)} variant="outline">
                 {user.role === 'admin' ? 'Администратор' : 
@@ -713,7 +712,7 @@ function AdminUserCard({
               </Badge>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-3 ml-4">
             <div className="space-y-3">
               <div>
@@ -733,7 +732,7 @@ function AdminUserCard({
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="flex gap-2">
                 <Button
                   variant={user.isActive ? "destructive" : "default"}
@@ -811,7 +810,7 @@ function CreateUserDialog({ onCreateUser }: { onCreateUser: (user: any) => void 
         <DialogHeader>
           <DialogTitle>Создание нового пользователя</DialogTitle>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -833,7 +832,7 @@ function CreateUserDialog({ onCreateUser }: { onCreateUser: (user: any) => void 
               />
             </div>
           </div>
-          
+
           <div>
             <Label htmlFor="email">Email</Label>
             <Input
@@ -844,7 +843,7 @@ function CreateUserDialog({ onCreateUser }: { onCreateUser: (user: any) => void 
               required
             />
           </div>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="login">Логин</Label>
@@ -866,7 +865,7 @@ function CreateUserDialog({ onCreateUser }: { onCreateUser: (user: any) => void 
               />
             </div>
           </div>
-          
+
           <div>
             <Label htmlFor="role">Роль</Label>
             <Select value={formData.role} onValueChange={(value: any) => setFormData({...formData, role: value})}>
@@ -881,7 +880,7 @@ function CreateUserDialog({ onCreateUser }: { onCreateUser: (user: any) => void 
               </SelectContent>
             </Select>
           </div>
-          
+
           <div>
             <Label htmlFor="telegramUsername">Telegram Username</Label>
             <Input
@@ -932,7 +931,7 @@ function CreateUserDialog({ onCreateUser }: { onCreateUser: (user: any) => void 
               </div>
             </>
           )}
-          
+
           <div className="flex gap-2 pt-4">
             <Button type="submit" className="flex-1">Создать</Button>
             <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
@@ -983,7 +982,7 @@ function AdminLogistCard({ logist }: { logist: Logist }) {
 // Create Logist Dialog Component
 function CreateLogistDialog() {
   const [isOpen, setIsOpen] = useState(false);
-  
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -1038,7 +1037,7 @@ function SendNotificationDialog({ onSendNotification }: { onSendNotification: (d
         <DialogHeader>
           <DialogTitle>Отправка уведомления</DialogTitle>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="recipients">Получатели</Label>
@@ -1054,7 +1053,7 @@ function SendNotificationDialog({ onSendNotification }: { onSendNotification: (d
               </SelectContent>
             </Select>
           </div>
-          
+
           <div>
             <Label htmlFor="title">Заголовок</Label>
             <Input
@@ -1064,7 +1063,7 @@ function SendNotificationDialog({ onSendNotification }: { onSendNotification: (d
               required
             />
           </div>
-          
+
           <div>
             <Label htmlFor="message">Сообщение</Label>
             <Textarea
@@ -1075,7 +1074,7 @@ function SendNotificationDialog({ onSendNotification }: { onSendNotification: (d
               required
             />
           </div>
-          
+
           <div className="flex gap-2">
             <Button type="submit" className="flex-1">Отправить</Button>
             <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
@@ -1127,7 +1126,7 @@ function AnalyticsPanel({ packages, users, logists }: {
   const totalPackages = packages.length;
   const activeUsers = users.filter(u => u.isActive).length;
   const activeLogists = logists.filter(l => l.isActive).length;
-  
+
   const packagesByStatus = packages.reduce((acc, pkg) => {
     acc[pkg.status] = (acc[pkg.status] || 0) + 1;
     return acc;
@@ -1141,7 +1140,7 @@ function AnalyticsPanel({ packages, users, logists }: {
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-semibold">Аналитика системы</h2>
-      
+
       {/* System Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>

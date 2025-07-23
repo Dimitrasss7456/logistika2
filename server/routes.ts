@@ -86,6 +86,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('Creating user with data:', { firstName, lastName, email, role, telegramUsername, login, password, location, address, supportsLockers, supportsOffices });
 
+      // Check if email already exists
+      if (email) {
+        const existingUser = await storage.getUserByEmail(email);
+        if (existingUser) {
+          return res.status(409).json({ message: "Пользователь с таким email уже существует" });
+        }
+      }
+
+      // Check if login already exists
+      if (login) {
+        const existingUsers = await storage.getAllUsers();
+        const existingLogin = existingUsers.find(u => u.login === login);
+        if (existingLogin) {
+          return res.status(409).json({ message: "Пользователь с таким логином уже существует" });
+        }
+      }
+
       // Use provided login and password
       const finalLogin = login || `${role}_${Date.now()}`;
       const finalPassword = password || "123456";
@@ -148,6 +165,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { firstName, lastName, email, role, telegramUsername, login, password, location, address, supportsLockers, supportsOffices } = req.body;
 
       console.log('Creating user with data:', { firstName, lastName, email, role, telegramUsername, login, password, location, address, supportsLockers, supportsOffices });
+
+      // Check if email already exists
+      if (email) {
+        const existingUser = await storage.getUserByEmail(email);
+        if (existingUser) {
+          return res.status(409).json({ message: "Пользователь с таким email уже существует" });
+        }
+      }
+
+      // Check if login already exists
+      if (login) {
+        const existingUsers = await storage.getAllUsers();
+        const existingLogin = existingUsers.find(u => u.login === login);
+        if (existingLogin) {
+          return res.status(409).json({ message: "Пользователь с таким логином уже существует" });
+        }
+      }
 
       // Use provided login and password
       const finalLogin = login || `${role}_${Date.now()}`;
