@@ -33,15 +33,16 @@ export async function setupAuth(app: Express) {
   app.post('/api/login', async (req, res) => {
     try {
       console.log('Login endpoint called with body:', req.body);
-      const { email, password } = req.body;
+      const { login, email, password } = req.body;
+      const loginField = login || email;
       
-      if (!email || !password) {
-        console.log('Missing email or password');
-        return res.status(400).json({ message: "Email/логин и пароль обязательны" });
+      if (!loginField || !password) {
+        console.log('Missing login or password');
+        return res.status(400).json({ message: "Логин и пароль обязательны" });
       }
 
-      console.log('Calling validateCredentials with:', email, password);
-      const user = await storage.validateCredentials(email, password);
+      console.log('Calling validateCredentials with:', loginField, password);
+      const user = await storage.validateCredentials(loginField, password);
       
       if (!user) {
         return res.status(401).json({ message: "Неверный email или пароль" });
@@ -61,8 +62,8 @@ export async function setupAuth(app: Express) {
   });
 
   // Logout endpoint (supports both GET and POST)
-  const logoutHandler = (req, res) => {
-    req.session.destroy((err) => {
+  const logoutHandler = (req: any, res: any) => {
+    req.session.destroy((err: any) => {
       if (err) {
         return res.status(500).json({ message: "Ошибка выхода из системы" });
       }
@@ -72,6 +73,47 @@ export async function setupAuth(app: Express) {
   
   app.post('/api/logout', logoutHandler);
   app.get('/api/logout', logoutHandler);
+
+  // Registration endpoint
+  app.post('/api/register', async (req, res) => {
+    try {
+      console.log('Registration endpoint called with body:', req.body);
+      const { email, login, password, firstName, lastName, role = 'client' } = req.body;
+      
+      if (!email || !login || !password) {
+        return res.status(400).json({ message: "Email, логин и пароль обязательны" });
+      }
+
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(409).json({ message: "Пользователь с таким email уже существует" });
+      }
+
+      // Create new user with plain password (no hashing as requested)
+      const newUser = await storage.createUser({
+        id: `${role}-${Date.now()}`,
+        email,
+        login,
+        firstName,
+        lastName,
+        role: role as any,
+        passwordHash: password, // Store password as plain text
+        isActive: true,
+      });
+
+      // Store user in session
+      (req.session as any).user = newUser;
+      
+      res.status(201).json({ 
+        user: newUser,
+        message: "Пользователь успешно зарегистрирован"
+      });
+    } catch (error) {
+      console.error("Registration error:", error);
+      res.status(500).json({ message: "Ошибка регистрации" });
+    }
+  });
 
   // Get current user endpoint
   app.get('/api/auth/user', (req, res) => {
